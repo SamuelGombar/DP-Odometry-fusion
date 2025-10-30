@@ -1,0 +1,9 @@
+# Ignore PDF and Graphviz files
+*.pdf
+*.gv
+
+# Ignore log, build, and install folders
+log/
+logs/
+build/
+install/
