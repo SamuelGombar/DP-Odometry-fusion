@@ -20,6 +20,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 add_executable(teleop src/teleop.cpp)
@@ -31,10 +32,11 @@ target_link_libraries(fusion Eigen3::Eigen)
 
 add_executable(scan_printing src/scan_printing.cpp)
 ament_target_dependencies(scan_printing rclcpp geometry_msgs sensor_msgs)
+
 install(TARGETS 
     teleop
-    scan_printing
     fusion
+    scan_printing
     DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
