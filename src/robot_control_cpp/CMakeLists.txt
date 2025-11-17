@@ -27,7 +27,9 @@ find_package(nav_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 # Include directories
-include_directories(include)
+include_directories(include
+                    ${rclcpp_INCLUDE_DIRS}
+                    ${sensor_msgs_INCLUDE_DIRS})
 
 add_executable(teleop src/teleop.cpp)
 ament_target_dependencies(teleop rclcpp geometry_msgs)
@@ -40,7 +42,7 @@ target_include_directories(kalman_filter_lib PUBLIC
   $<INSTALL_INTERFACE:include>)
 
 add_executable(fusion src/fusion.cpp)
-ament_target_dependencies(fusion rclcpp geometry_msgs nav_msgs)
+ament_target_dependencies(fusion rclcpp geometry_msgs nav_msgs sensor_msgs)
 target_link_libraries(fusion kalman_filter_lib Eigen3::Eigen)
 target_include_directories(fusion PRIVATE include)
 
