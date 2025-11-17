@@ -21,20 +21,23 @@ void KalmanFilter::prediction(Eigen::Vector3d wheel_odom, double velocity)
          0, 1,  velocity * std::cos(wheel_odom(2)),
          0, 0, 1;
     P = A * P * A.transpose() + Q;
+    printKFState();
 }
 
 void KalmanFilter::correction(const std::vector<std::pair<double,double>>& scan_pairs, float angle_increment)
 {
     R.resize(2*scan_pairs.size(), 2*scan_pairs.size());
     R.setIdentity();
+    R *= 0.000000001;
     compute_C(scan_pairs, angle_increment);
     
-    cout << "P: " << P.rows() << "x" << P.cols() << endl;
-    cout << "C: " << C.rows() << "x" << C.cols() << endl;
-    cout << "R: " << R.rows() << "x" << R.cols() << endl;
-    cout << "scan_pairs_vector: " << scan_pairs_vector.size() << endl;
+    // cout << "P: " << P.rows() << "x" << P.cols() << endl;
+    // cout << "C: " << C.rows() << "x" << C.cols() << endl;
+    // cout << "R: " << R.rows() << "x" << R.cols() << endl;
+    // cout << "scan_pairs_vector: " << scan_pairs_vector.size() << endl;
     K = P * C.transpose() * (C * P * C.transpose() + R).inverse();
 
+    // cout << K << endl;
 
     flatten(scan_pairs);
     x_hat = x_hat + K * scan_pairs_vector;
@@ -79,4 +82,13 @@ void KalmanFilter::flatten(const std::vector<std::pair<double,double>>& scan_pai
 Eigen::Vector3d KalmanFilter::get_x_hat()
 {
     return x_hat;
+}
+
+void KalmanFilter::printKFState()
+{
+    cout << "===== Kalman Filter State =====" << endl;
+    cout << "x_hat =\n" << x_hat << endl;
+    cout << "A =\n" << A << endl;
+    cout << "P =\n" << P << endl;
+    cout << "==============================" << endl;
 }

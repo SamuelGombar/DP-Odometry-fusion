@@ -25,6 +25,10 @@ find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 # Include directories
 include_directories(include
@@ -42,7 +46,14 @@ target_include_directories(kalman_filter_lib PUBLIC
   $<INSTALL_INTERFACE:include>)
 
 add_executable(fusion src/fusion.cpp)
-ament_target_dependencies(fusion rclcpp geometry_msgs nav_msgs sensor_msgs)
+ament_target_dependencies(fusion 
+                          rclcpp 
+                          geometry_msgs
+                          nav_msgs 
+                          tf2
+                          tf2_ros
+                          tf2_geometry_msgs
+                          sensor_msgs)
 target_link_libraries(fusion kalman_filter_lib Eigen3::Eigen)
 target_include_directories(fusion PRIVATE include)
 

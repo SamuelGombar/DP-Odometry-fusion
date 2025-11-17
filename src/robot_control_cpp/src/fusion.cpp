@@ -5,7 +5,7 @@
 #include <Eigen/Dense>
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include <tf2/LinearMath/Quaternion.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 
 class OdomSubscriber : public rclcpp::Node
@@ -70,7 +70,7 @@ private:
                           msg->pose.pose.orientation.z;  // yaw only
 
 
-        if (wheel_odom_ready && velocity_ready) {
+        if (wheel_odom_ready && velocity_ready && correction_finished) {
             kf.prediction(wheel_odom_vec, velocity_);
             prediction_ready = true;
         }
@@ -84,7 +84,6 @@ private:
         //             msg->pose.pose.position.z);
         lidar_odom_ready = true;
         
-        std::cout << scan_ready << std::endl;
         if (prediction_ready && scan_ready) {
             scan_copy = scan_;
             angle = angle_increment_;
@@ -92,9 +91,11 @@ private:
             scan_to_coords(scan_copy);
             flatten_scan_pairs();
             scan_into_wheel_pose();
+            correction_finished = false;
             kf.correction(scan_pairs, angle);
             fused_output = kf.get_x_hat();
             publish();
+            correction_finished = true;
             prediction_ready = false;
             scan_ready = false;
         }
@@ -207,6 +208,7 @@ private:
     bool velocity_ready = false;
     bool prediction_ready = false;
     bool scan_ready = false;
+    bool correction_finished = true;
 
     KalmanFilter kf;
 };

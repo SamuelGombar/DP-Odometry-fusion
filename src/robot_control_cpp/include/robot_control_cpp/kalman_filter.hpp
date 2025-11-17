@@ -13,6 +13,7 @@ public:
     void compute_C(const std::vector<std::pair<double,double>>& scan_pairs, float angle_increment);
     void flatten(const std::vector<std::pair<double,double>>& scan_pairs);
     Eigen::Vector3d get_x_hat();
+    void printKFState();
 
 private:
     // Process noise
