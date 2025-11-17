@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(robot_control_cpp)
 
+# Export compile commands so VS Code / clangd / IntelliSense can read include paths
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
   set(CMAKE_C_STANDARD 99)
@@ -23,12 +26,23 @@ find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 
+# Include directories
+include_directories(include)
+
 add_executable(teleop src/teleop.cpp)
 ament_target_dependencies(teleop rclcpp geometry_msgs)
 
+# Create library for kalman_filter
+add_library(kalman_filter_lib src/kalman_filter.cpp)
+target_link_libraries(kalman_filter_lib PUBLIC Eigen3::Eigen)
+target_include_directories(kalman_filter_lib PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+
 add_executable(fusion src/fusion.cpp)
-ament_target_dependencies(fusion rclcpp geometry_msgs)
-target_link_libraries(fusion Eigen3::Eigen)
+ament_target_dependencies(fusion rclcpp geometry_msgs nav_msgs)
+target_link_libraries(fusion kalman_filter_lib Eigen3::Eigen)
+target_include_directories(fusion PRIVATE include)
 
 add_executable(scan_printing src/scan_printing.cpp)
 ament_target_dependencies(scan_printing rclcpp geometry_msgs sensor_msgs)
@@ -37,6 +51,7 @@ install(TARGETS
     teleop
     fusion
     scan_printing
+    kalman_filter_lib
     DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
