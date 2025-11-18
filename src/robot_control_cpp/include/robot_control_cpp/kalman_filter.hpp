@@ -8,36 +8,27 @@
 class KalmanFilter {
 public:
     explicit KalmanFilter(const Eigen::Vector3d& x_init);
+
     void prediction(Eigen::Vector3d wheel_odom, double velocity);
-    void correction(const std::vector<std::pair<double,double>>& scan_pairs, float angle_increment);
-    void compute_C(const std::vector<std::pair<double,double>>& scan_pairs, float angle_increment);
-    void flatten(const std::vector<std::pair<double,double>>& scan_pairs);
+
+    void correction(Eigen::Vector3d lidar_odom);
+
     Eigen::Vector3d get_x_hat();
-    void printKFState();
 
 private:
-    // Process noise
     Eigen::Matrix3d Q;
-    // Measurement noise
-    Eigen::MatrixXd R;       // dynamic based on scan size
 
+    Eigen::Matrix3d R;
 
-    // State vector
-    Eigen::Vector3d x_hat;   // [x, y, theta]
+    Eigen::Vector3d x_hat;
 
     Eigen::Matrix3d A;
     
-    // Covariance
     Eigen::Matrix3d P;
 
-    // Measurement matrix
-    Eigen::MatrixXd C;
+    Eigen::Matrix3d C;
 
-    // Kalman gain
     Eigen::MatrixXd K;
-
-    Eigen::VectorXd scan_pairs_vector;
-
 };
 
 #endif // KALMANFILTER_H
