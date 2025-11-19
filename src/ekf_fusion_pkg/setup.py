@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'kf_simulation'
+package_name = 'ekf_fusion_pkg'
 
 setup(
     name=package_name,
@@ -11,11 +11,7 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
-    install_requires=[
-        'setuptools',
-        'numpy',
-        'matplotlib',
-    ],
+    install_requires=['setuptools', 'numpy', 'matplotlib'],
     zip_safe=True,
     maintainer='samuelg9',
     maintainer_email='samogombar@gmail.com',
@@ -28,7 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'KFsim = kf_simulation.KFsim:main'
+            'ekf_node = ekf_fusion_pkg.ekf_node:main'
         ],
     },
 )

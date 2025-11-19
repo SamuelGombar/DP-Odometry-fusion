@@ -6,6 +6,7 @@
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <tf2/utils.h>
 
 
 class OdomSubscriber : public rclcpp::Node
@@ -43,13 +44,37 @@ private:
     {
         wheel_odom_setup = true;
 
+        tf2::Quaternion q;
+        tf2::fromMsg(msg->pose.pose.orientation, q);
+        double yaw = tf2::getYaw(q);
         wheel_odom_vec << msg->pose.pose.position.x,
                           msg->pose.pose.position.y,
-                          msg->pose.pose.orientation.z;
+                          yaw;
 
+        rclcpp::Time current_time = msg->header.stamp;
+
+        // FROM CHAT
+        dt = 0.0;
+        if (last_time.nanoseconds() != 0) {
+            dt = (current_time - last_time).seconds(); // dt in seconds
+        }
+
+        last_time = current_time;
+
+        // extract velocities from wheel odometry
+        v = msg->twist.twist.linear.x;
+        omega = msg->twist.twist.angular.z;
+
+        // call EKF prediction
+        // FROM CHAT
+
+        double theta = wheel_odom_vec(2);
         if (isPredictionReady()) {
             prediction_finished = false;
-            kf.prediction(wheel_odom_vec, velocity_);
+            // kf.prediction(wheel_odom_vec, velocity_);
+            //FROM CHAT
+            kf.prediction(dt, v, omega, theta);
+            //FROM CHAT
             prediction_finished = true;
         }
     }
@@ -58,13 +83,18 @@ private:
     {
         lidar_odom_setup = true;
 
+        tf2::Quaternion q;
+        tf2::fromMsg(msg->pose.pose.orientation, q);
+        double yaw = tf2::getYaw(q);
+
         lidar_odom_vec << msg->pose.pose.position.x,
                           msg->pose.pose.position.y,
-                          msg->pose.pose.orientation.z;
+                          yaw;
+
 
         if (isCorrectionReady()) {
             correction_finished = false;
-            kf.correction(lidar_odom_vec);
+            kf.correction(lidar_odom_vec, scan_msg_);
             fused_output = kf.get_x_hat();
             publish();
             correction_finished = true;
@@ -83,7 +113,7 @@ private:
     {
         scan_setup = true;
 
-        scan_ = msg->ranges;
+        scan_msg_ = msg;
         scan_ready = true;
     }
 
@@ -128,7 +158,7 @@ private:
     Eigen::Vector3d wheel_odom_vec;
     Eigen::Vector3d lidar_odom_vec;
     double velocity_;
-    std::vector<float> scan_;
+    sensor_msgs::msg::LaserScan::SharedPtr scan_msg_;
     
     Eigen::Vector3d fused_output;
 
@@ -141,8 +171,14 @@ private:
     
     bool correction_finished = true;
     bool prediction_finished = false;
+
+    double dt;
+    double v;
+    double omega;
     
     KalmanFilter kf;
+
+    rclcpp::Time last_time;
 };
 
 int main(int argc, char * argv[])
