@@ -133,10 +133,14 @@ private:
         q.setRPY(0, 0, yaw);
         q.normalize();         
 
+
+
         fused_msg.pose.pose.orientation.x = q.x();
         fused_msg.pose.pose.orientation.y = q.y();
         fused_msg.pose.pose.orientation.z = q.z();
         fused_msg.pose.pose.orientation.w = q.w();
+
+        // fused_msg.pose.pose.orientation.z = 
 
         fusion_publisher_->publish(fused_msg);
     }

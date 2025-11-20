@@ -48,14 +48,21 @@ void KalmanFilter::prediction(double dt, double v, double omega, double theta, E
     // if (diff < M_PI) {
     //     unwrapped_theta_w -= 2*M_PI;
     // }
+    x_hat = wheel_odom_vec;
+
     static double unwrapped_rot = wheel_odom_vec(2);
     static double curr_rot = wheel_odom_vec(2);
     static double prev_rot = wheel_odom_vec(2);
+    static double pis = 0.0;
     curr_rot = wheel_odom_vec(2);
 
-    unwrapped_rot = unwrapYaw(prev_rot, curr_rot); //TU SI SKONCIL
+    double diff = curr_rot - prev_rot;
+    if (diff > M_PI) pis -= 2 * M_PI;
+    if (diff < -M_PI) pis += 2 * M_PI;
 
-    x_hat = wheel_odom_vec;
+    unwrapped_rot = curr_rot + pis;
+
+    x_hat(2) = unwrapped_rot;
 
     A << 1, 0, -v * std::sin(theta) * dt,
          0, 1,  v *  std::cos(theta) * dt,
@@ -63,9 +70,8 @@ void KalmanFilter::prediction(double dt, double v, double omega, double theta, E
 
     P = A * P * A.transpose() + Q;
 
-    // last_theta_r = wheel_odom_vec(2);
     prev_rot = curr_rot;
-    std::cout << unwrapped_rot << "  ";
+    std::cout << unwrapped_rot << std::endl;
 }
 
 
@@ -78,8 +84,22 @@ void KalmanFilter::correction(Eigen::Vector3d lidar_odom, const sensor_msgs::msg
     K.setZero();
 
     std::vector<Point> points = getLidarPoints(scan_msg);
-    
+
+    static double unwrapped_rot = lidar_odom(2);
+    static double curr_rot = lidar_odom(2);
+    static double prev_rot = lidar_odom(2);
+    static double pis = 0.0;
+    curr_rot = lidar_odom(2);
+
+    double diff = curr_rot - prev_rot;
+    if (diff > M_PI) pis -= 2 * M_PI;
+    if (diff < -M_PI) pis += 2 * M_PI;
+
+    unwrapped_rot = curr_rot + pis;
+
     // C = calculateC(points, lidar_odom(2));
+    lidar_odom(2) = unwrapped_rot;
+
     Eigen::Matrix3d C_c, R_r;
     C_c.setIdentity();
     R_r.setIdentity();
@@ -87,17 +107,14 @@ void KalmanFilter::correction(Eigen::Vector3d lidar_odom, const sensor_msgs::msg
     x_hat += K * (lidar_odom - C_c * x_hat);  //je ta zatvorka dobre? hlavne C * x_hat... idk, ale musis polozit current scan ku x_hat
     // wrapThetaToPi();
     P = P - K * C_c * P;                      //podla zadania 2 z opt je to C * x_hat
-    
-    std::cout << lidar_odom(2) << "  " 
-          << x_hat(2) << "  "  << std::endl;
- 
-
-
-
 
     // numerically "more stable (Gemini)"
     // P = (Eigen::Matrix3d::Identity() - K * C) * P;
+
+    prev_rot = curr_rot;
+    std::cout << unwrapped_rot << std::endl << endl;
 }
+
 
 void KalmanFilter::wrapThetaToPi() {
     double theta = x_hat(2);
@@ -157,15 +174,4 @@ std::vector<Point> KalmanFilter::getLidarPoints(const sensor_msgs::msg::LaserSca
         points[i] = Point{x,y};
     }
     return points;
-}
-
-
-double KalmanFilter::unwrapYaw(double prev_yaw, double curr_yaw) {
-    double delta = curr_yaw - prev_yaw;
-    if (delta > M_PI) {
-        delta -= 2 * M_PI;
-    } else if (delta < -M_PI) {
-        delta += 2 * M_PI;
-    }
-    return prev_yaw + delta;
 }

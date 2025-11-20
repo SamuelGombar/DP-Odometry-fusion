@@ -26,8 +26,6 @@ public:
 
     std::vector<Point> getLidarPoints(const sensor_msgs::msg::LaserScan::SharedPtr scan_msg);
 
-    double unwrapYaw(double prev_yaw, double curr_yaw);
-
     void wrapThetaToPi();
 
     Eigen::Vector3d get_x_hat();
