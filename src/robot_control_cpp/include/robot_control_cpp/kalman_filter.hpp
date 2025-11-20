@@ -18,7 +18,7 @@ public:
 
     // void prediction(Eigen::Vector3d wheel_odom, double velocity);
 
-    void prediction(double dt, double v, double omega, double theta);
+    void prediction(double dt, double v, double omega, double theta, Eigen::Vector3d wheel_odom_vec);
 
     void correction(Eigen::Vector3d lidar_odom, const sensor_msgs::msg::LaserScan::SharedPtr scan_msg);
 
@@ -26,7 +26,13 @@ public:
 
     std::vector<Point> getLidarPoints(const sensor_msgs::msg::LaserScan::SharedPtr scan_msg);
 
+    double unwrapYaw(double prev_yaw, double curr_yaw);
+
+    void wrapThetaToPi();
+
     Eigen::Vector3d get_x_hat();
+
+    Eigen::VectorXd stack(std::vector<Point> points);
 
 private:
     Eigen::Matrix3d P;
@@ -43,7 +49,9 @@ private:
 
     Eigen::Vector3d x_hat;
 
-    std::vector<Point> points;
+    // double unwrapped_theta_w, unwrapped_theta_l;
+
+    // std::vector<Point> points;
 };
 
 #endif // KALMANFILTER_H
