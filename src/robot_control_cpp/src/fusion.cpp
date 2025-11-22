@@ -73,7 +73,7 @@ private:
             prediction_finished = false;
             // kf.prediction(wheel_odom_vec, velocity_);
             //FROM CHAT
-            kf.prediction(dt, v, omega, theta, wheel_odom_vec);
+            kf.prediction(dt, v, wheel_odom_vec);
             //FROM CHAT
             prediction_finished = true;
         }
