@@ -20,11 +20,13 @@ public:
 
     void correction(Eigen::Vector3d lidar_odom, const sensor_msgs::msg::LaserScan::SharedPtr scan_msg);
 
-    Eigen::MatrixXd updateR(sensor_msgs::msg::LaserScan::SharedPtr scan_msg, Eigen::MatrixXd R);
+    Eigen::MatrixXd updateR(sensor_msgs::msg::LaserScan::SharedPtr scan_msg, double theta);
 
-    std::vector<Point> getLidarPoints(const sensor_msgs::msg::LaserScan::SharedPtr scan_msg);
+    std::vector<Point> getLidarPoints(const sensor_msgs::msg::LaserScan::SharedPtr scan_msg, double theta);
 
     Eigen::Vector3d get_x_hat();
+
+    std::vector<double> mean(const std::vector<Point>& points);
 
 private:
     Eigen::MatrixXd P;
