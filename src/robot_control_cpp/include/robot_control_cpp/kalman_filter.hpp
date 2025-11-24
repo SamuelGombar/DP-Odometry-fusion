@@ -14,17 +14,17 @@ struct Point {
 
 class KalmanFilter {
 public:
-    explicit KalmanFilter(const Eigen::Vector3d& x_init);
+    explicit KalmanFilter(const Eigen::Vector2d& x_init);
 
-    void prediction(double dt, double v, Eigen::Vector3d wheel_odom_vec);
+    void prediction(double dt, Eigen::Vector2d wheel_speed_vec);
 
-    void correction(Eigen::Vector3d lidar_odom, const sensor_msgs::msg::LaserScan::SharedPtr scan_msg);
+    void correction(Eigen::Vector2d lidar_speed_vec, const sensor_msgs::msg::LaserScan::SharedPtr scan_msg);
 
     Eigen::MatrixXd updateR(sensor_msgs::msg::LaserScan::SharedPtr scan_msg, double theta);
 
     std::vector<Point> getLidarPoints(const sensor_msgs::msg::LaserScan::SharedPtr scan_msg, double theta);
 
-    Eigen::Vector3d get_x_hat();
+    Eigen::VectorXd get_message();
 
     std::vector<double> mean(const std::vector<Point>& points);
 
@@ -41,7 +41,9 @@ private:
 
     Eigen::MatrixXd C;
 
-    Eigen::Vector3d x_hat;
+    Eigen::Vector2d x_hat;
+
+    Eigen::Vector3d fused_odom;
 };
 
 #endif

@@ -8,11 +8,12 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2/utils.h>
 
+using namespace std;
 
 class OdomSubscriber : public rclcpp::Node
 {
 public:
-    OdomSubscriber() : Node("odom_subscriber"), kf(Eigen::Vector3d(0.0, 0.0, 0.0))
+    OdomSubscriber() : Node("odom_subscriber"), kf(Eigen::Vector2d(0.0, 0.0))
     {
         odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
             "/odom", 10,
@@ -36,6 +37,15 @@ public:
         
         fusion_publisher_ = this->create_publisher<nav_msgs::msg::Odometry>("odom_fused", 10);
         
+        lidar_speed_vec << 0, 0;
+        wheel_speed_vec << 0, 0;
+        v_x = 0.0;
+        v_y = 0.0;
+        omega = 0.0;
+        omega_lidar = 0.0;
+        v_x_lidar = 0.0;
+        v_y_lidar = 0.0;
+
         RCLCPP_INFO(this->get_logger(), "Kalman filter initialized");
     }
 
@@ -43,59 +53,52 @@ private:
     void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     {
         wheel_odom_setup = true;
-
-        tf2::Quaternion q;
-        tf2::fromMsg(msg->pose.pose.orientation, q);
-        double yaw = tf2::getYaw(q);
-        wheel_odom_vec << msg->pose.pose.position.x,
-                          msg->pose.pose.position.y,
-                          yaw;
-
-        rclcpp::Time current_time = msg->header.stamp;
-
-        // FROM CHAT
-        dt = 0.0;
+        static double v = 0.0;
+        static double omega = 0.0;
+        static double dt = 0.0;
+        
+        static rclcpp::Time current_time = msg->header.stamp;
+        static rclcpp::Time last_time; 
+        current_time = msg->header.stamp;
         if (last_time.nanoseconds() != 0) {
-            dt = (current_time - last_time).seconds(); // dt in seconds
+            dt = (current_time - last_time).seconds();
         }
-
         last_time = current_time;
+        
+        v = msg->twist.twist.linear.x * dt;
+        omega = msg->twist.twist.angular.z * dt;
+        wheel_speed_vec  << v, omega;
 
-        // extract velocities from wheel odometry
-        v = msg->twist.twist.linear.x;
-        omega = msg->twist.twist.angular.z;
-
-        // call EKF prediction
-        // FROM CHAT
-
-        double theta = wheel_odom_vec(2);
         if (isPredictionReady()) {
             prediction_finished = false;
-            // kf.prediction(wheel_odom_vec, velocity_);
-            //FROM CHAT
-            kf.prediction(dt, v, wheel_odom_vec);
-            //FROM CHAT
+            kf.prediction(dt, wheel_speed_vec);
             prediction_finished = true;
         }
+
     }
 
     void odom_icp_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     {
         lidar_odom_setup = true;
+        static double v = 0.0;
+        static double omega = 0.0;
+        static double dt = 0.0;
+        
+        static rclcpp::Time current_time = msg->header.stamp;
+        static rclcpp::Time last_time; 
+        current_time = msg->header.stamp;
+        if (last_time.nanoseconds() != 0) {
+            dt = (current_time - last_time).seconds();
+        }
+        last_time = current_time;
 
-        tf2::Quaternion q;
-        tf2::fromMsg(msg->pose.pose.orientation, q);
-        double yaw = tf2::getYaw(q);
-
-        lidar_odom_vec << msg->pose.pose.position.x,
-                          msg->pose.pose.position.y,
-                          yaw;
-
-
+        v = msg->twist.twist.linear.x * dt;
+        omega = msg->twist.twist.angular.z * dt;
+        lidar_speed_vec << v, omega;
         if (isCorrectionReady()) {
             correction_finished = false;
-            kf.correction(lidar_odom_vec, scan_msg_);
-            fused_output = kf.get_x_hat();
+            kf.correction(lidar_speed_vec, scan_msg_);
+            fused_output = kf.get_message();
             publish();
             correction_finished = true;
             scan_ready = false;
@@ -125,22 +128,19 @@ private:
         fused_msg.header.frame_id = "odom";     
         fused_msg.child_frame_id = "base_link";
 
-        fused_msg.pose.pose.position.x = fused_output(0);
-        fused_msg.pose.pose.position.y = fused_output(1);
-
-        double yaw = fused_output(2);
         tf2::Quaternion q;
-        q.setRPY(0, 0, yaw);
+        q.setRPY(0, 0, fused_output(2));
         q.normalize();         
-
-
 
         fused_msg.pose.pose.orientation.x = q.x();
         fused_msg.pose.pose.orientation.y = q.y();
         fused_msg.pose.pose.orientation.z = q.z();
         fused_msg.pose.pose.orientation.w = q.w();
 
-        // fused_msg.pose.pose.orientation.z = 
+        fused_msg.pose.pose.position.x = fused_output(0);
+        fused_msg.pose.pose.position.y = fused_output(1);
+        fused_msg.twist.twist.linear.x = fused_output(3);
+        fused_msg.twist.twist.angular.z = fused_output(4);
 
         fusion_publisher_->publish(fused_msg);
     }
@@ -159,12 +159,12 @@ private:
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr fusion_publisher_;
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_subscription_;
 
-    Eigen::Vector3d wheel_odom_vec;
-    Eigen::Vector3d lidar_odom_vec;
+    Eigen::Vector2d wheel_speed_vec, lidar_speed_vec;
+    Eigen::Vector3d lidar_odom_vec, wheel_odom_vec;
     double velocity_;
     sensor_msgs::msg::LaserScan::SharedPtr scan_msg_;
     
-    Eigen::Vector3d fused_output;
+    Eigen::VectorXd fused_output;
 
     bool wheel_odom_setup = false;
     bool lidar_odom_setup = false;
@@ -176,13 +176,13 @@ private:
     bool correction_finished = true;
     bool prediction_finished = false;
 
-    double dt;
-    double v;
-    double omega;
+    double dt, dt_lidar;
+    double v_x, v_y, v_x_lidar, v_y_lidar;
+    double omega, omega_lidar;
     
     KalmanFilter kf;
 
-    rclcpp::Time last_time;
+    rclcpp::Time last_time, last_time_lidar;
 };
 
 int main(int argc, char * argv[])
