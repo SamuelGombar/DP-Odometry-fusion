@@ -30,6 +30,7 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 
+
 # Include directories
 include_directories(include
                     ${rclcpp_INCLUDE_DIRS}
@@ -57,15 +58,28 @@ ament_target_dependencies(fusion
 target_link_libraries(fusion kalman_filter_lib Eigen3::Eigen)
 target_include_directories(fusion PRIVATE include)
 
+
+add_executable(pid_control src/pid_control.cpp)
+ament_target_dependencies(pid_control
+  rclcpp
+  geometry_msgs
+  nav_msgs
+  sensor_msgs
+  tf2
+  tf2_ros
+  tf2_geometry_msgs)
+target_include_directories(pid_control PRIVATE include)
+
 add_executable(scan_printing src/scan_printing.cpp)
 ament_target_dependencies(scan_printing rclcpp geometry_msgs sensor_msgs)
 
 install(TARGETS 
-    teleop
-    fusion
-    scan_printing
-    kalman_filter_lib
-    DESTINATION lib/${PROJECT_NAME})
+  teleop
+  fusion
+  scan_printing
+  pid_control
+  kalman_filter_lib
+  DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
