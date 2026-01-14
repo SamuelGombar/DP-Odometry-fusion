@@ -28,6 +28,8 @@ public:
 
     std::vector<double> mean(const std::vector<Point>& points);
 
+    Eigen::MatrixXd updateQ(Eigen::Vector2d wheel_speed, double dt);
+
 private:
     Eigen::MatrixXd P;
 

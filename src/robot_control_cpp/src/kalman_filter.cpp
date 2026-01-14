@@ -14,7 +14,7 @@ KalmanFilter::KalmanFilter(const Eigen::Vector2d& x_init)
     A = Eigen::MatrixXd::Identity(2, 2);
 
     Q = Eigen::MatrixXd::Identity(2, 2);
-    Q *= 0.4;
+    // Q *= 0.4;
 
     R = Eigen::MatrixXd::Identity(2, 2);
     // R *= 1000;
@@ -34,13 +34,14 @@ void KalmanFilter::prediction(double dt, Eigen::Vector2d wheel_speed_vec)
     // A << r/2, r/2;   //pri realnom asi bude treba - r: polomer kolesa, L: dlzka spojnice kolies
     //      r/L, -r/L;
 
+    Q = updateQ(wheel_speed_vec, dt);
     P = A * P * A.transpose() + Q;
 }
 
 
 void KalmanFilter::correction(Eigen::Vector2d lidar_speed_vec, const sensor_msgs::msg::LaserScan::SharedPtr scan_msg)
 {
-    R = updateR(scan_msg, fused_odom(2));
+    // R = updateR(scan_msg, fused_odom(2));
 
     // for (int i = 0; i < R.rows(); ++i) {
     //     for (int j = 0; j < R.cols(); ++j) {
@@ -56,6 +57,26 @@ void KalmanFilter::correction(Eigen::Vector2d lidar_speed_vec, const sensor_msgs
     fused_odom(1) += x_hat(0)*sin(fused_odom(2));
     fused_odom(2) += x_hat(1);
     // P = (Eigen::Matrix3d::Identity() - K * C) * P;
+}
+
+
+
+Eigen::MatrixXd KalmanFilter::updateQ(Eigen::Vector2d wheel_speed_vec, double dt) {
+    static double v = 0.0, theta = 0.0, total_move_time = 0.0;
+    theta += wheel_speed_vec(1);
+    v += wheel_speed_vec(0)*cos(theta);
+
+    if (wheel_speed_vec(0) > 0.1) {
+        total_move_time += dt;
+        Eigen::MatrixXd Q_new(2, 2);
+        static double alpha = 1;
+        Q_new << 1, 0,
+                 0, alpha*(theta*dt);
+
+        return Q_new;
+    }
+    
+    return Q;
 }
 
 
