@@ -14,10 +14,12 @@ KalmanFilter::KalmanFilter(const Eigen::Vector2d& x_init)
     A = Eigen::MatrixXd::Identity(2, 2);
 
     Q = Eigen::MatrixXd::Identity(2, 2);
-    // Q *= 0.4;
+    Q *= 0.4;
+    // Q *= 1000;
 
     R = Eigen::MatrixXd::Identity(2, 2);
-    // R *= 1000;
+    R *= 80;
+    // R *= 1;
 
     K = Eigen::MatrixXd::Identity(2, 2);
 
@@ -34,7 +36,7 @@ void KalmanFilter::prediction(double dt, Eigen::Vector2d wheel_speed_vec)
     // A << r/2, r/2;   //pri realnom asi bude treba - r: polomer kolesa, L: dlzka spojnice kolies
     //      r/L, -r/L;
 
-    Q = updateQ(wheel_speed_vec, dt);
+    // Q = updateQ(wheel_speed_vec, dt);
     P = A * P * A.transpose() + Q;
 }
 
@@ -71,7 +73,7 @@ Eigen::MatrixXd KalmanFilter::updateQ(Eigen::Vector2d wheel_speed_vec, double dt
         Eigen::MatrixXd Q_new(2, 2);
         static double alpha = 1;
         Q_new << 1, 0,
-                 0, alpha*(theta*dt);
+                 0, alpha*std::abs(theta*dt);
 
         return Q_new;
     }
