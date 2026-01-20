@@ -4,6 +4,7 @@
 #include "std_msgs/msg/float64.hpp"
 #include <Eigen/Dense>
 #include "sensor_msgs/msg/laser_scan.hpp"
+#include "sensor_msgs/msg/joint_state.hpp"
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2/utils.h>
@@ -25,18 +26,18 @@ public:
             std::bind(&OdomSubscriber::odom_icp_callback, this, std::placeholders::_1)
         );
 
-        velocity_sub_ = this->create_subscription<std_msgs::msg::Float64>(
-            "/speed", 10,
-            std::bind(&OdomSubscriber::velocity_callback, this, std::placeholders::_1)
+        joint_state_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
+            "/wheel_speed", 10,
+            std::bind(&OdomSubscriber::joint_state_callback, this, std::placeholders::_1)
         );
-        
+
         scan_subscription_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
             "/scan", 10,
             std::bind(&OdomSubscriber::scan_callback, this, std::placeholders::_1)
         );
-        
+
         fusion_publisher_ = this->create_publisher<nav_msgs::msg::Odometry>("odom_fused", 10);
-        
+
         lidar_speed_vec << 0, 0;
         wheel_speed_vec << 0, 0;
         v_x = 0.0;
@@ -50,12 +51,21 @@ public:
     }
 
 private:
+    void joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg)
+    {
+        // Example: store wheel angular speeds from JointState
+        wheel_speed_setup = true;
+        if (msg->velocity.size() >= 2) {
+            wheel_speed_left_ = msg->velocity[0];
+            wheel_speed_right_ = msg->velocity[1];
+        }
+    }
+
     void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     {
         wheel_odom_setup = true;
         static double v = 0.0;
         static double omega = 0.0;
-        static double dt = 0.0;
         
         static rclcpp::Time current_time = msg->header.stamp;
         static rclcpp::Time last_time; 
@@ -71,7 +81,7 @@ private:
 
         if (isPredictionReady()) {
             prediction_finished = false;
-            kf.prediction(dt, wheel_speed_vec);
+            kf.prediction(dt, msg, wheel_speed_left_, wheel_speed_right_);
             prediction_finished = true;
         }
 
@@ -82,22 +92,21 @@ private:
         lidar_odom_setup = true;
         static double v = 0.0;
         static double omega = 0.0;
-        static double dt = 0.0;
         
-        static rclcpp::Time current_time = msg->header.stamp;
-        static rclcpp::Time last_time; 
-        current_time = msg->header.stamp;
-        if (last_time.nanoseconds() != 0) {
-            dt = (current_time - last_time).seconds();
-        }
-        last_time = current_time;
+        // static rclcpp::Time current_time = msg->header.stamp;
+        // static rclcpp::Time last_time; 
+        // current_time = msg->header.stamp;
+        // if (last_time.nanoseconds() != 0) {
+        //     dt = (current_time - last_time).seconds();
+        // }
+        // last_time = current_time;
 
         v = msg->twist.twist.linear.x * dt;
         omega = msg->twist.twist.angular.z * dt;
         lidar_speed_vec << v, omega;
         if (isCorrectionReady()) {
             correction_finished = false;
-            kf.correction(lidar_speed_vec, scan_msg_);
+            kf.correction(dt, msg, scan_msg_);
             fused_output = kf.get_message();
             publish();
             correction_finished = true;
@@ -105,12 +114,6 @@ private:
         }
     }
 
-    void velocity_callback(const std_msgs::msg::Float64::SharedPtr msg)
-    {
-        velocity_setup = true;
-
-        velocity_ = msg->data;
-    }
 
     void scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
     {
@@ -146,30 +149,31 @@ private:
     }
 
     bool isPredictionReady() {
-        return (wheel_odom_setup && lidar_odom_setup && velocity_setup && scan_setup && correction_finished);
+        return (wheel_odom_setup && lidar_odom_setup && scan_setup && correction_finished && wheel_speed_setup);
     }
 
     bool isCorrectionReady() {
-        return (wheel_odom_setup && lidar_odom_setup && velocity_setup && scan_setup && prediction_finished && scan_ready);
+        return (wheel_odom_setup && lidar_odom_setup && scan_setup && prediction_finished && scan_ready);
     }
 
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_icp_sub_;
-    rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr velocity_sub_;
+    rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr fusion_publisher_;
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_subscription_;
 
     Eigen::Vector2d wheel_speed_vec, lidar_speed_vec;
+    double wheel_speed_left_ = 0.0;
+    double wheel_speed_right_ = 0.0;
     Eigen::Vector3d lidar_odom_vec, wheel_odom_vec;
-    double velocity_;
     sensor_msgs::msg::LaserScan::SharedPtr scan_msg_;
     
     Eigen::VectorXd fused_output;
 
     bool wheel_odom_setup = false;
     bool lidar_odom_setup = false;
-    bool velocity_setup = false;
     bool scan_setup = false;
+    bool wheel_speed_setup = false;
 
     bool scan_ready = false;
     

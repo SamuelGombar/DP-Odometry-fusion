@@ -5,6 +5,7 @@
 #include <vector>
 #include <Eigen/Dense>
 #include "sensor_msgs/msg/laser_scan.hpp"
+#include <nav_msgs/msg/odometry.hpp>
 
 
 struct Point {
@@ -16,9 +17,9 @@ class KalmanFilter {
 public:
     explicit KalmanFilter(const Eigen::Vector2d& x_init);
 
-    void prediction(double dt, Eigen::Vector2d wheel_speed_vec);
+    void prediction(double dt, nav_msgs::msg::Odometry::SharedPtr wheel_msg, double w_L, double w_R);
 
-    void correction(Eigen::Vector2d lidar_speed_vec, const sensor_msgs::msg::LaserScan::SharedPtr scan_msg);
+    void correction(double dt, nav_msgs::msg::Odometry::SharedPtr lidar_msg, const sensor_msgs::msg::LaserScan::SharedPtr scan_msg);
 
     Eigen::MatrixXd updateR(sensor_msgs::msg::LaserScan::SharedPtr scan_msg, double theta);
 
