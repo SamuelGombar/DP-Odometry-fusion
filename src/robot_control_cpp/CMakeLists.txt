@@ -47,7 +47,8 @@ ament_target_dependencies(teleop rclcpp geometry_msgs)
 
 # Create library for kalman_filter
 add_library(kalman_filter_lib src/kalman_filter.cpp)
-target_link_libraries(kalman_filter_lib PUBLIC Eigen3::Eigen)
+ament_target_dependencies(kalman_filter_lib nav_msgs)
+target_link_libraries(kalman_filter_lib Eigen3::Eigen)
 target_include_directories(kalman_filter_lib PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)

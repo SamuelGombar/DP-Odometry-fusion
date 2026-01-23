@@ -106,7 +106,7 @@ private:
         lidar_speed_vec << v, omega;
         if (isCorrectionReady()) {
             correction_finished = false;
-            kf.correction(dt, msg, scan_msg_);
+            kf.correction(dt, msg);
             fused_output = kf.get_message();
             publish();
             correction_finished = true;

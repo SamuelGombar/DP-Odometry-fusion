@@ -59,17 +59,9 @@ private:
             dt = (current_time - last_time).seconds();
         }
 
-        Eigen::Vector3d u;
-        u(0) = msg->pose.pose.position.x;
-        u(1) = msg->pose.pose.position.y;
-        Eigen::Quaterniond q(
-            msg->pose.pose.orientation.w,
-            msg->pose.pose.orientation.x,
-            msg->pose.pose.orientation.y,
-            msg->pose.pose.orientation.z
-        );
-        double yaw = q.toRotationMatrix().eulerAngles(2, 1, 0)[0];
-        u(2) = yaw;
+        Eigen::Vector2d u;
+        u(0) = msg->twist.twist.linear.x;
+        u(1) = msg->twist.twist.angular.z;
         last_time = current_time;
         if (isPredictionReady()) {
             prediction_finished = false;
@@ -84,17 +76,9 @@ private:
     void icpCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
     {
         lidar_odom_setup = true;
-        Eigen::VectorXd u_meas(3);
-        u_meas(0) = msg->pose.pose.position.x;
-        u_meas(1) = msg->pose.pose.position.y;
-        Eigen::Quaterniond q(
-            msg->pose.pose.orientation.w,
-            msg->pose.pose.orientation.x,
-            msg->pose.pose.orientation.y,
-            msg->pose.pose.orientation.z
-        );
-        double yaw = q.toRotationMatrix().eulerAngles(2, 1, 0)[0];
-        u_meas(2) = yaw;
+        Eigen::Vector2d u_meas;
+        u_meas(0) = msg->twist.twist.linear.x;
+        u_meas(1) = msg->twist.twist.angular.z;
         if (isCorrectionReady()) {
             correction_finished = false;
             ekf->update(u_meas);
@@ -130,6 +114,7 @@ private:
         scan_msg_ = msg;
         scan_ready = true;
     }
+
 
     bool isPredictionReady() {
         return (wheel_odom_setup && lidar_odom_setup && scan_setup && correction_finished);

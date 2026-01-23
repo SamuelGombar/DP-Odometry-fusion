@@ -19,17 +19,9 @@ public:
 
     void prediction(double dt, nav_msgs::msg::Odometry::SharedPtr wheel_msg, double w_L, double w_R);
 
-    void correction(double dt, nav_msgs::msg::Odometry::SharedPtr lidar_msg, const sensor_msgs::msg::LaserScan::SharedPtr scan_msg);
-
-    Eigen::MatrixXd updateR(sensor_msgs::msg::LaserScan::SharedPtr scan_msg, double theta);
-
-    std::vector<Point> getLidarPoints(const sensor_msgs::msg::LaserScan::SharedPtr scan_msg, double theta);
+    void correction(double dt, nav_msgs::msg::Odometry::SharedPtr lidar_msg);
 
     Eigen::VectorXd get_message();
-
-    std::vector<double> mean(const std::vector<Point>& points);
-
-    Eigen::MatrixXd updateQ(Eigen::Vector2d wheel_speed, double dt);
 
 private:
     Eigen::MatrixXd P;
