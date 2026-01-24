@@ -468,13 +468,20 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
     odom_msg.pose.pose.orientation.z = f2b_.getRotation().z();
     odom_msg.pose.pose.orientation.w = f2b_.getRotation().w();
     
-    double lidar_kf_and_current_diff = f2b_.getOrigin().length() - f2b_kf_.getOrigin().length();
-    double wheel_kf_and_current_diff = wheel_f2b_.getOrigin().length() - wheel_f2b_kf_.getOrigin().length();
+    auto lidar_kf_and_current_pose_diff = f2b_kf_.inverse() * f2b_;
+    auto wheel_kf_and_current_pose_diff = wheel_f2b_kf_.inverse() * wheel_f2b_;
+    double lidar_kf_and_current_dist_diff = f2b_.getOrigin().length() - f2b_kf_.getOrigin().length();
+    double wheel_kf_and_current_dist_diff = wheel_f2b_.getOrigin().length() - wheel_f2b_kf_.getOrigin().length();
     // std::cout << "total lidar dist: " << total_lidar_dist << std::endl;
     // std::cout << "total wheel dist: " << total_wheel_dist << std::endl << std::endl;
-    if (std::abs(lidar_kf_and_current_diff - wheel_kf_and_current_diff) > 0.3) {
-      auto lidar_wheel_diff = f2b_.inverse() * wheel_f2b_;
-      f2b_ *= lidar_wheel_diff;
+    auto T_err = lidar_kf_and_current_pose_diff.inverse() * wheel_kf_and_current_pose_diff;
+      // tf2::Vector3 t = -T_err.getOrigin();
+    // T_err.setOrigin(t);
+      // f2b_ *= T_err;
+    if (std::abs(lidar_kf_and_current_dist_diff - wheel_kf_and_current_dist_diff) > 0.3) {
+      // auto lidar_wheel_diff = f2b_.inverse() * wheel_f2b_;
+      // f2b_ *= lidar_wheel_diff;
+      f2b_ *= T_err;
     }
 
     // Get pose difference in base frame and calculate velocities
