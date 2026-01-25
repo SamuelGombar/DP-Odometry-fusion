@@ -236,6 +236,9 @@ void OdometryServer::PublishOdometry(const Sophus::SE3d &pose,
     odom_msg.header.stamp = stamp;
     odom_msg.header.frame_id = odom_frame_;
     odom_msg.pose.pose = tf2::sophusToPose(pose);
+    odom_msg.pose.covariance[0] = 1000000;
+    odom_msg.pose.covariance[7] = 1000000;
+    odom_msg.pose.covariance[35] = 1000000;
     odom_publisher_->publish(std::move(odom_msg));
 }
 
