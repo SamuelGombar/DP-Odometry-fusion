@@ -19,10 +19,10 @@ ekf_filter_node:
 
     # x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az
     odom0: /odom
-    odom0_config: [false, false, false,
-                   false, false, false,
-                   true,  true,  false,
+    odom0_config: [true,  true,  false,
                    false, false, true,
+                   false, false, false,
+                   false, false, false,
                    false, false, false]
     odom1: /genz/odometry
     odom1_config: [true,  true,  false,
