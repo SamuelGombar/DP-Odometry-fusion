@@ -97,6 +97,8 @@ private:
   tf2::Transform prev_wheel_f2b_;
   tf2::Transform f2b_kf_;  // pose of the last keyframe scan in fixed frame
   tf2::Transform wheel_f2b_kf_;
+  tf2::Transform prev_f2b_kf_;
+  tf2::Transform prev_wheel_f2b_kf_;
 
 
   tf2::Transform odom_to_base_tf;

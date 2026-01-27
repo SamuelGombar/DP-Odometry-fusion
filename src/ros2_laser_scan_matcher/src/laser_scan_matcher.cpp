@@ -468,21 +468,72 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
     odom_msg.pose.pose.orientation.z = f2b_.getRotation().z();
     odom_msg.pose.pose.orientation.w = f2b_.getRotation().w();
     
-    auto lidar_kf_and_current_pose_diff = f2b_kf_.inverse() * f2b_;
-    auto wheel_kf_and_current_pose_diff = wheel_f2b_kf_.inverse() * wheel_f2b_;
-    double lidar_kf_and_current_dist_diff = f2b_.getOrigin().length() - f2b_kf_.getOrigin().length();
-    double wheel_kf_and_current_dist_diff = wheel_f2b_.getOrigin().length() - wheel_f2b_kf_.getOrigin().length();
-    // std::cout << "total lidar dist: " << total_lidar_dist << std::endl;
-    // std::cout << "total wheel dist: " << total_wheel_dist << std::endl << std::endl;
-    auto T_err = lidar_kf_and_current_pose_diff.inverse() * wheel_kf_and_current_pose_diff;
-      // tf2::Vector3 t = -T_err.getOrigin();
-    // T_err.setOrigin(t);
-      // f2b_ *= T_err;
-    if (std::abs(lidar_kf_and_current_dist_diff - wheel_kf_and_current_dist_diff) > 0.3) {
+    //POCITANIE K-POSLEDNYCH TRANSF.
+    // auto lidar_pose_diff = prev_f2b_.inverse() * f2b_;
+    // auto wheel_pose_diff = prev_wheel_f2b_.inverse() * wheel_f2b_;
+    // static std::vector<tf2::Transform> lidar_transformations;
+    // static std::vector<tf2::Transform> wheel_transformations;
+    // if (lidar_transformations.size() < 9) {
+    //   lidar_transformations.insert(lidar_transformations.begin(), lidar_pose_diff);
+    //   wheel_transformations.insert(wheel_transformations.begin(), wheel_pose_diff);
+    // }
+    // if (lidar_transformations.size() >= 9) {
+    //   lidar_transformations.pop_back();
+    //   wheel_transformations.pop_back();
+    //   lidar_transformations.insert(lidar_transformations.begin(), lidar_pose_diff);
+    //   wheel_transformations.insert(wheel_transformations.begin(), wheel_pose_diff);
+    // }
+
+    // tf2::Transform lidar_sum_poses = tf2::Transform::getIdentity();
+    // tf2::Transform wheel_sum_poses = tf2::Transform::getIdentity();
+    // for (int i = lidar_transformations.size() - 1; i >= 0; --i) {
+    //   lidar_sum_poses = lidar_sum_poses * lidar_transformations[i];
+    // }
+
+    // for (int i = wheel_transformations.size() - 1; i >= 0; --i) {
+    //     wheel_sum_poses = wheel_sum_poses * wheel_transformations[i];
+    // }
+    
+    // double lidar_sum_poses_dist = lidar_sum_poses.getOrigin().length();
+    // double wheel_sum_poses_dist = wheel_sum_poses.getOrigin().length();
+
+    // if (std::abs(lidar_sum_poses_dist - wheel_sum_poses_dist) > 0.25) {
+    //   auto lidar_wheel_diff = f2b_.inverse() * wheel_f2b_;
+    //   f2b_ = f2b_ * lidar_wheel_diff;
+    // }
+
+    //PRVE RIESENIE
+    // auto lidar_kf_and_current_pose_diff = f2b_kf_.inverse() * f2b_;
+    // auto wheel_kf_and_current_pose_diff = wheel_f2b_kf_.inverse() * wheel_f2b_;
+    // double lidar_kf_and_current_dist_diff = f2b_.getOrigin().length() - f2b_kf_.getOrigin().length();
+    // double wheel_kf_and_current_dist_diff = wheel_f2b_.getOrigin().length() - wheel_f2b_kf_.getOrigin().length();
+    // auto T_err = lidar_kf_and_current_pose_diff.inverse() * wheel_kf_and_current_pose_diff;
+    // if (std::abs(lidar_kf_and_current_dist_diff - wheel_kf_and_current_dist_diff) > 0.3) {
+    //   // auto lidar_wheel_diff = f2b_.inverse() * wheel_f2b_;
+    //   // f2b_ *= lidar_wheel_diff;
+    //   // f2b_ *= T_err;
+    // }
+
+    auto lidar_prev_kf_kf_pose_diff = prev_f2b_kf_.inverse() * f2b_kf_;
+    auto wheel_prev_kf_kf_pose_diff = prev_wheel_f2b_kf_.inverse() * wheel_f2b_kf_;
+    double lidar_dist = lidar_prev_kf_kf_pose_diff.getOrigin().length();
+    double wheel_dist = wheel_prev_kf_kf_pose_diff.getOrigin().length();
+    static tf2::Transform prev_lidar_wheel_diff = tf2::Transform::getIdentity(); 
+    if (std::abs(lidar_dist) < std::abs(wheel_dist)*0.3) {
+      std::cout << lidar_dist << std::endl;
+      std::cout << wheel_dist << std::endl << std::endl;
       // auto lidar_wheel_diff = f2b_.inverse() * wheel_f2b_;
       // f2b_ *= lidar_wheel_diff;
-      f2b_ *= T_err;
+      // f2b_ *= wheel_prev_kf_kf_pose_diff;
+      auto lidar_wheel_diff = lidar_prev_kf_kf_pose_diff.inverse() * wheel_prev_kf_kf_pose_diff;
+      std::cout << lidar_wheel_diff.getOrigin().length() << std::endl << std::endl;
+      if (prev_lidar_wheel_diff.getOrigin().length() != lidar_wheel_diff.getOrigin().length()) {
+        f2b_ *= lidar_wheel_diff;
+      }
+      prev_lidar_wheel_diff = lidar_wheel_diff;
+      // f2b_ *= wheel_prev_kf_kf_pose_diff;
     }
+
 
     // Get pose difference in base frame and calculate velocities
     auto lidar_pose_diff = prev_f2b_.inverse() * f2b_;
@@ -524,8 +575,16 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
     // generate a keyframe
     ld_free(prev_ldp_scan_);
     prev_ldp_scan_ = curr_ldp_scan;
+    prev_f2b_kf_ = f2b_kf_;
+    prev_wheel_f2b_kf_ = wheel_f2b_kf_;
     f2b_kf_ = f2b_;
     wheel_f2b_kf_ = wheel_f2b_;
+
+    // auto lidar_pose_diff = prev_f2b_kf_.inverse() * f2b_kf_;
+    // auto wheel_pose_diff = prev_wheel_f2b_kf_.inverse() * wheel_f2b_kf_;
+
+    // std::cout << lidar_pose_diff.getOrigin().length() << std::endl;
+    // std::cout << wheel_pose_diff.getOrigin().length() << std::endl << std::endl;
   }
   else
   {
@@ -540,6 +599,13 @@ bool LaserScanMatcher::newKeyframeNeeded(const tf2::Transform& d)
 {
   if (fabs(tf2::getYaw(d.getRotation())) > kf_dist_angular_)
     return true;
+
+  auto wheel_kf_current_diff = wheel_f2b_kf_.inverse() * wheel_f2b_;
+  double w_x = wheel_kf_current_diff.getOrigin().getX();
+  double w_y = wheel_kf_current_diff.getOrigin().getY();
+  if (w_x * w_x + w_y * w_y > kf_dist_linear_sq_) {
+    return true;
+  }
 
   double x = d.getOrigin().getX();
   double y = d.getOrigin().getY();
