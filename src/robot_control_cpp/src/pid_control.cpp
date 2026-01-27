@@ -64,8 +64,6 @@ private:
         if (flag) {
             checkpoints.push_back({0, 3.5});
             checkpoints.push_back({2.7, 3.5});
-            // checkpoints.push_back({2.7, 0});
-            // checkpoints.push_back({1, 0});
             flag = false;
         }
 		
@@ -91,13 +89,13 @@ private:
         error_t = sqrt(pow(checkpoints[0].x - this->x, 2) + pow(checkpoints[0].y - this->y, 2));
         integral_pos = integral_pos + error_t*datacounter;
 
-        RCLCPP_INFO(
-            this->get_logger(),
-            "\nTarget phi: %.3f\nAngular error: %.3f\nDistance error: %.3f\n",
-            target_phi,
-            error_r,
-            error_t
-        );
+        // RCLCPP_INFO(
+        //     this->get_logger(),
+        //     "\nTarget phi: %.3f\nAngular error: %.3f\nDistance error: %.3f\n",
+        //     target_phi,
+        //     error_r,
+        //     error_t
+        // );
 
         if (combined_regulator) {
             //rampa

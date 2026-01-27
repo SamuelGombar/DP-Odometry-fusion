@@ -16,6 +16,13 @@ public:
 
 private:
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_;
+    double current_linear_speed_ = 0.0;
+    double current_angular_speed_ = 0.0;
+    const double LINEAR_INCREMENT = 0.1;
+    const double ANGULAR_INCREMENT = 3.14 / 40.0;
+    const double MAX_LINEAR_SPEED = 500;
+    const double MAX_ANGULAR_SPEED = 3.14 / 4;
+    const double DECELERATION_RATE = 0.05;
 
     char getKey()
     {
@@ -24,8 +31,8 @@ private:
         if (tcgetattr(0, &old) < 0) perror("tcsetattr()");
         old.c_lflag &= ~ICANON;
         old.c_lflag &= ~ECHO;
-        old.c_cc[VMIN] = 1;
-        old.c_cc[VTIME] = 0;
+        old.c_cc[VMIN] = 0;
+        old.c_cc[VTIME] = 1;
         if (tcsetattr(0, TCSANOW, &old) < 0) perror("tcsetattr ICANON");
         if (read(0, &buf, 1) < 0) perror("read()");
         old.c_lflag |= ICANON;
@@ -46,18 +53,52 @@ private:
                 getKey(); // skip '['
                 switch (getKey())
                 {
-                case 'A': msg.linear.x = 0.4; msg.angular.z = 0.0; break; // up
-                case 'B': msg.linear.x = -0.4; msg.angular.z = 0.0; break; // down
-                case 'C': msg.linear.x = 0.0; msg.angular.z = -1.5; break; // right
-                case 'D': msg.linear.x = 0.0; msg.angular.z = 1.5; break; // left
-                default: msg.linear.x = 0.0; msg.angular.z = 0.0; break;
+                case 'A': // up - increment forward speed
+                    current_linear_speed_ += LINEAR_INCREMENT;
+                    if (current_linear_speed_ > MAX_LINEAR_SPEED)
+                        current_linear_speed_ = MAX_LINEAR_SPEED;
+                    break;
+                case 'B': // down - decrement forward speed
+                    current_linear_speed_ -= LINEAR_INCREMENT;
+                    if (current_linear_speed_ < -MAX_LINEAR_SPEED)
+                        current_linear_speed_ = -MAX_LINEAR_SPEED;
+                    break;
+                case 'C': // right - decrease angular speed (turn right)
+                    current_angular_speed_ -= ANGULAR_INCREMENT;
+                    if (current_angular_speed_ < -MAX_ANGULAR_SPEED)
+                        current_angular_speed_ = -MAX_ANGULAR_SPEED;
+                    break;
+                case 'D': // left - increase angular speed (turn left)
+                    current_angular_speed_ += ANGULAR_INCREMENT;
+                    if (current_angular_speed_ > MAX_ANGULAR_SPEED)
+                        current_angular_speed_ = MAX_ANGULAR_SPEED;
+                    break;
+                default:
+                    break;
                 }
-                pub_->publish(msg);
             }
             else if (c == 'q') // quit
             {
                 break;
             }
+            else if (c == 0) // no key pressed - apply deceleration
+            {
+                // Gradually slow down linear speed
+                if (current_linear_speed_ > 0)
+                    current_linear_speed_ -= DECELERATION_RATE;
+                else if (current_linear_speed_ < 0)
+                    current_linear_speed_ += DECELERATION_RATE;
+                
+                // Gradually slow down angular speed
+                if (current_angular_speed_ > 0)
+                    current_angular_speed_ -= DECELERATION_RATE;
+                else if (current_angular_speed_ < 0)
+                    current_angular_speed_ += DECELERATION_RATE;
+            }
+            
+            msg.linear.x = current_linear_speed_;
+            msg.angular.z = current_angular_speed_;
+            pub_->publish(msg);
         }
     }
 };
