@@ -38,8 +38,8 @@ public:
 private:
 	void on_timer()
 	{
-        static double Kp_r = 1;
-        static double Kp_t = 0.1;
+        static double Kp_r = 0.8;
+        static double Kp_t = 0.001;
         static double Ki_t = 0.0001;
         static double integral_pos = 0;
         static double error_r = 0;
@@ -49,8 +49,8 @@ private:
         static double output_t = 0;
         static std::vector<Point> checkpoints;
         static bool flag = true;
-        static double max_r = M_PI/4;
-        static double max_t = 500;
+        static double max_r = 0.6;
+        static double max_t = 0.6;
         static double incr_r = M_PI/40;
         static double incr_t = 0.1;
         static bool is_moving = false;
@@ -136,6 +136,8 @@ private:
 
             if (finish) publish_cmd(0.0, 0.0);
             else publish_cmd(output_t, output_r);
+            // std::cout << output_t << std::endl;
+            std::cout << output_r << std::endl;
         }
 		datacounter++;
 	}

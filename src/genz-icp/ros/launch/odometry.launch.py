@@ -40,7 +40,7 @@ def generate_launch_description():
             DeclareLaunchArgument("visualize", default_value="true"),
             DeclareLaunchArgument("odom_frame", default_value="odom"),
             DeclareLaunchArgument("base_frame", default_value=""),
-            DeclareLaunchArgument("publish_odom_tf", default_value="true"),
+            DeclareLaunchArgument("publish_odom_tf", default_value="false"),
             # GenZ-ICP parameters
             DeclareLaunchArgument("deskew", default_value="false"),
             DeclareLaunchArgument("max_range", default_value="100.0"),
@@ -84,6 +84,13 @@ def generate_launch_description():
                         "config_file": LaunchConfiguration("config_file"),
                     }
                 ],
+            ),
+            Node(
+                package="tf2_ros",
+                executable="static_transform_publisher",
+                name="base_link_to_base_laser_broadcaster",
+                arguments=["0", "0", "0", "0", "0", "0", "base_link", "base_laser"],
+                output="screen"
             ),
             # Node(
             #     package="rviz2",

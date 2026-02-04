@@ -217,17 +217,35 @@ void OdometryServer::PublishOdometry(const Sophus::SE3d &pose,
     if (publish_odom_tf_) {
         geometry_msgs::msg::TransformStamped transform_msg;
         transform_msg.header.stamp = stamp;
-        transform_msg.header.frame_id = odom_frame_;
+        transform_msg.header.frame_id = "base_link";
         transform_msg.child_frame_id = base_frame_.empty() ? cloud_frame_id : base_frame_;
         transform_msg.transform = tf2::sophusToTransform(pose);
         tf_broadcaster_->sendTransform(transform_msg);
     }
+
+
+    // --- add white noise to pose (SE2) ---
+    // static std::mt19937 gen(std::random_device{}());
+    // static std::normal_distribution<double> n_xy(-0.05, 0.05);
+    // static std::normal_distribution<double> n_yaw(0.1, 0.1);
+    // Eigen::Vector3d t = pose.translation();     // CHANGED: Vector2d → Vector3d
+    // t.x() += n_xy(gen);
+    // t.y() += n_xy(gen);
+    // // z unchanged (planar robot)
+
+    // // --- rotation (modify only yaw in SO3) ---
+    // Eigen::Vector3d omega = pose.so3().log();   // CHANGED: so2 → so3
+    // omega.z() += n_yaw(gen);                   // CHANGED: yaw noise now on Z axis only
+
+    // Sophus::SE3d noisy_pose(Sophus::SO3d::exp(omega), t);  // CHANGED: SE2 → SE3
+    // --------------------------------------
 
     // publish trajectory msg
     geometry_msgs::msg::PoseStamped pose_msg;
     pose_msg.header.stamp = stamp;
     pose_msg.header.frame_id = odom_frame_;
     pose_msg.pose = tf2::sophusToPose(pose);
+    // pose_msg.pose = tf2::sophusToPose(noisy_pose);
     path_msg_.poses.push_back(pose_msg);
     traj_publisher_->publish(path_msg_);
 
@@ -236,9 +254,12 @@ void OdometryServer::PublishOdometry(const Sophus::SE3d &pose,
     odom_msg.header.stamp = stamp;
     odom_msg.header.frame_id = odom_frame_;
     odom_msg.pose.pose = tf2::sophusToPose(pose);
+    // odom_msg.pose.pose = tf2::sophusToPose(noisy_pose);
+    //toto mas screennute
     odom_msg.pose.covariance[0] = 0.008;
     odom_msg.pose.covariance[7] = 0.008;
     odom_msg.pose.covariance[35] = 0.008;
+
     odom_publisher_->publish(std::move(odom_msg));
 }
 

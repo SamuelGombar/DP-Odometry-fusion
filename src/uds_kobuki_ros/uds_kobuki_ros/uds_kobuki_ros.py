@@ -237,7 +237,7 @@ class Kobuki(Node):
         self.last_pose_update_rates = pose_update_rates
 
         self.odom_pub.publish(msg)
-        self.odom_to_base_link_tf(msg)
+        # self.odom_to_base_link_tf(msg)
 
     def publish_laser_scan(self, stamp: Time):
         msg = LaserScan()
