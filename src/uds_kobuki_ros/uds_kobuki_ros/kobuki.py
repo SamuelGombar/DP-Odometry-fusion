@@ -131,6 +131,16 @@ def parse_kobuki_message(data):
             checked_value += 1
         # other conditions follow the same pattern...
         # omitted for brevity
+        elif data[checked_value] == 0x04:
+            checked_value += 1
+            if data[checked_value] != 0x07:
+                return -3
+            checked_value += 1
+            # GyroAngle is signed 16-bit in 1/100 degrees
+            output.GyroAngle = int.from_bytes(data[checked_value:checked_value+2], byteorder='little', signed=True)
+            # Normalize to radius: values are in 1/100 degrees.
+            output.GyroAngle = (output.GyroAngle / 100.0) * (math.pi / 180.0)
+
 
         else:
             checked_value += 1

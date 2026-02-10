@@ -154,7 +154,9 @@ class Kobuki(Node):
             response, _ = self.robot_sock.recvfrom(1024)
 
             with self.lock:
-                self.robot_data = parse_kobuki_message(response)
+                parsed_data = parse_kobuki_message(response)
+                if isinstance(parsed_data, TKobukiData):
+                    self.robot_data = parsed_data
         print("Robot UDP receiver stopped")
     
     def lidar_udp_receiver_callback(self):
@@ -262,6 +264,7 @@ class Kobuki(Node):
     def publish_wheel_speed(self, stamp: Time):
         left_velocity = self.mobile_robot.last_velocity_left
         right_velocity = self.mobile_robot.last_velocity_right
+        print(self.robot_data.GyroAngle)
 
         wheel_speed_msg = JointState()
         wheel_speed_msg.header.stamp = stamp.to_msg()
