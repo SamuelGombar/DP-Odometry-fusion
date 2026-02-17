@@ -62,6 +62,8 @@ public:
   ~LaserScanMatcher();
 
   void scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan_msg);
+  void wheel_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
+
 
 private:
   // Ros handle
@@ -75,6 +77,7 @@ private:
   tf2::Transform laser_to_base_; 
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_publisher_;
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr fusion_publisher_;
   // Coordinate parameters
   std::string map_frame_;
   std::string base_frame_;
@@ -92,14 +95,15 @@ private:
   bool publish_tf_;
 
   tf2::Transform f2b_;     // fixed-to-base tf (pose of base frame in fixed frame)
-  tf2::Transform wheel_f2b_;
   tf2::Transform prev_f2b_; // previous fixed-to-base tf (for odometry calculation)
-  tf2::Transform prev_wheel_f2b_;
   tf2::Transform f2b_kf_;  // pose of the last keyframe scan in fixed frame
-  tf2::Transform wheel_f2b_kf_;
-  tf2::Transform prev_f2b_kf_;
-  tf2::Transform prev_wheel_f2b_kf_;
 
+  tf2::Transform wheel_f2b_;
+  tf2::Transform prev_wheel_f2b_;
+  tf2::Transform fusion_;
+  tf2::Transform prev_fusion_;
+  tf2::Transform prev_fusion_f2b_;
+  tf2::Transform fusion_f2b_;
 
   tf2::Transform odom_to_base_tf;
 
@@ -129,7 +133,6 @@ private:
     const std::string & description = "", const std::string & additional_constraints = "",
     bool read_only = false);
   void createCache (const sensor_msgs::msg::LaserScan::SharedPtr& scan_msg);
-  void wheel_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
 
 
 };  // LaserScanMatcher
