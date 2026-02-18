@@ -49,8 +49,8 @@ private:
         static double output_t = 0;
         static std::vector<Point> checkpoints;
         static bool flag = true;
-        static double max_r = 0.6;
-        static double max_t = 0.6;
+        static double max_r = 0.3;
+        static double max_t = 0.3;
         static double incr_r = M_PI/40;
         static double incr_t = 0.1;
         static bool is_moving = false;
@@ -64,6 +64,8 @@ private:
         if (flag) {
             checkpoints.push_back({0, 3.5});
             checkpoints.push_back({2.7, 3.5});
+            checkpoints.push_back({0, 3.5});
+            checkpoints.push_back({0, 0});
             flag = false;
         }
 		
@@ -137,7 +139,7 @@ private:
             if (finish) publish_cmd(0.0, 0.0);
             else publish_cmd(output_t, output_r);
             // std::cout << output_t << std::endl;
-            std::cout << output_r << std::endl;
+            // std::cout << output_r << std::endl;
         }
 		datacounter++;
 	}

@@ -32,24 +32,15 @@ class MobileRobot:
     last_tick_right = 0
     last_rad_left = 0.0
     last_rad_right = 0.0
-    initial_left_encoder = 0.0
-    initial_right_encoder = 0.0
 
     def __init__(self):
         pass
 
     def update_diff_drive(self, timestamp, left_encoder, right_encoder):
         if timestamp == 0:
-            delta_left = 0.0
-            delta_right = 0.0
-            if self.initial_left_encoder == 0.0 or self.initial_right_encoder == 0.0:
-                self.initial_left_encoder = left_encoder
-                self.initial_right_encoder = right_encoder
-                delta_left = left_encoder - self.initial_left_encoder
-                delta_right = right_encoder - self.initial_right_encoder
             self.last_timestamp = timestamp
-            self.last_tick_left = left_encoder - delta_left
-            self.last_tick_right = right_encoder - delta_right
+            self.last_tick_left = left_encoder
+            self.last_tick_right = right_encoder
             return [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]
         
         left_diff_ticks = calculate_diff_ticks(self.last_tick_left, left_encoder)
@@ -87,7 +78,6 @@ class MobileRobot:
         '''
         ds = self.wheel_radius * (dleft + dright) / 2.0
         domega = self.wheel_radius * (dright - dleft) / self.bias
-        # return [ds, 0, wrap_angle(domega)]
-        return [ds, 0, domega]
+        return [ds, 0, wrap_angle(domega)]
 
     

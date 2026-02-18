@@ -7,6 +7,8 @@ log/
 logs/
 build/
 install/
+venv/
+recordings/subt_mrs_long_corridor*
 
 .vscode/
 

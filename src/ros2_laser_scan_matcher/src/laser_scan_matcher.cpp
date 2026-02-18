@@ -78,7 +78,7 @@ LaserScanMatcher::LaserScanMatcher() : Node("laser_scan_matcher"), initialized_(
     "Which frame to use for the map");
   add_parameter("laser_frame", rclcpp::ParameterValue(std::string("base_laser")),
     "Which frame to use for the laser");
-  add_parameter("kf_dist_linear", rclcpp::ParameterValue(0.10),
+  add_parameter("kf_dist_linear", rclcpp::ParameterValue(0.30), //0.10
     "When to generate keyframe scan.");
   add_parameter("kf_dist_angular", rclcpp::ParameterValue(10.0* (M_PI/180.0)),
     "When to generate keyframe scan.");
@@ -92,7 +92,7 @@ LaserScanMatcher::LaserScanMatcher() : Node("laser_scan_matcher"), initialized_(
   add_parameter("max_linear_correction", rclcpp::ParameterValue(0.5),
     "Maximum translation between scans (m).");
 
-  add_parameter("max_iterations", rclcpp::ParameterValue(10),
+  add_parameter("max_iterations", rclcpp::ParameterValue(25), //10
     "Maximum ICP cycle iterationsr.");
 
   add_parameter("epsilon_xy", rclcpp::ParameterValue(0.000001),
@@ -104,10 +104,10 @@ LaserScanMatcher::LaserScanMatcher() : Node("laser_scan_matcher"), initialized_(
   add_parameter("max_correspondence_dist", rclcpp::ParameterValue(0.3),
     "Maximum distance for a correspondence to be valid.");
 
-  add_parameter("sigma", rclcpp::ParameterValue(0.010),
+  add_parameter("sigma", rclcpp::ParameterValue(0.0010), //0.010
     "Noise in the scan (m).");
 
-  add_parameter("use_corr_tricks", rclcpp::ParameterValue(1),
+  add_parameter("use_corr_tricks", rclcpp::ParameterValue(0), //0
     "Use smart tricks for finding correspondences.");
 
   add_parameter("restart", rclcpp::ParameterValue(0),
@@ -128,7 +128,7 @@ LaserScanMatcher::LaserScanMatcher() : Node("laser_scan_matcher"), initialized_(
   add_parameter("orientation_neighbourhood", rclcpp::ParameterValue(20),
     "Number of neighbour rays used to estimate the orientation.");
   
-  add_parameter("use_point_to_line_distance", rclcpp::ParameterValue(1),
+  add_parameter("use_point_to_line_distance", rclcpp::ParameterValue(0),
     "If 0, it's vanilla ICP.");
 
   add_parameter("do_alpha_test", rclcpp::ParameterValue(0),
@@ -485,7 +485,7 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
     //POCITANIE K-POSLEDNYCH TRANSF.
     static std::vector<tf2::Transform> lidar_transformations;
     static std::vector<tf2::Transform> wheel_transformations;
-    static int num_of_last_transforms = 30;
+    static int num_of_last_transforms = 9;
     if (lidar_transformations.size() < num_of_last_transforms) {
       lidar_transformations.insert(lidar_transformations.begin(), lidar_pose_diff);
       wheel_transformations.insert(wheel_transformations.begin(), wheel_pose_diff);
@@ -509,26 +509,26 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
     
     double lidar_sum_poses_dist = lidar_sum_poses.getOrigin().length();
     double wheel_sum_poses_dist = wheel_sum_poses.getOrigin().length();
-    std::cout << "wheel sum dist: " << wheel_sum_poses_dist << std::endl;
-    std::cout << "lidar sum dist: " << lidar_sum_poses_dist << std::endl;
-    // if ((lidar_sum_poses_dist > wheel_sum_poses_dist*0.1) && (lidar_transformations.size() >= num_of_last_transforms)) {
-    fusion_ = fusion_ * lidar_pose_diff;
-    // }                                                // && (lidar_transformations.size() >= num_of_last_transforms)
-    if (lidar_sum_poses_dist > 0.05 && wheel_sum_poses_dist > 0.05) {
-      if ((lidar_sum_poses_dist <= wheel_sum_poses_dist*0.4)) {
-        // std::cout << "Degeneracy correction: " << wheel_sum_poses_dist - lidar_sum_poses_dist << std::endl;
-        std::cout << "Degeneracy correction: " << wheel_pose_diff.getOrigin().length() << std::endl;
-        // std::cout << "lidar_sum: " << lidar_sum_poses_dist << std::endl;
-        // std::cout << "wheel_sum: " << wheel_sum_poses_dist << std::endl;
-        // auto correction = lidar_sum_poses.inverse() * wheel_sum_poses;
-        auto correction = wheel_pose_diff;
-        // corrections.insert(corrections.begin(), correction);
 
-        fusion_ = fusion_ * correction;
-        // f2b_kf_ = f2b_kf_ * correction;  // Keep keyframe in sync so ICP doesn't overwrite
-        // lidar_transformations.clear();
-        // wheel_transformations.clear();
-      }
+    fusion_ = fusion_ * lidar_pose_diff;
+    double ratio = lidar_sum_poses_dist/wheel_sum_poses_dist;
+    static double corr_threshold = 0.2;
+    if ((ratio < corr_threshold)) {
+        if (wheel_pose_diff.getOrigin().length() > 0.01) {
+          std::cout << ratio << (ratio < corr_threshold ? " CORRECTED" : " ") << std::endl;
+          // auto correction = wheel_pose_diff;
+          auto correction = lidar_pose_diff.inverse() * wheel_pose_diff;
+          fusion_ = fusion_ * correction;
+        }
+    }
+    else if (lidar_sum_poses.getOrigin().getX() < -0.0060) {
+      std::cout << "Going backwards: " << lidar_sum_poses.getOrigin().getX() << std::endl;
+      // auto diff = lidar_pose_diff.inverse() * wheel_pose_diff;
+      tf2::Transform correction;
+      // correction.setOrigin(diff.getOrigin());
+      correction.setOrigin(-lidar_pose_diff.getOrigin());
+      correction.setRotation(tf2::Quaternion::getIdentity());
+      fusion_ = fusion_ * correction;
     }
 
     nav_msgs::msg::Odometry fusion_msg;
