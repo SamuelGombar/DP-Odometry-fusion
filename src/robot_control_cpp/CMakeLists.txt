@@ -34,7 +34,7 @@ find_package(laser_geometry REQUIRED)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../kalman_filters ${CMAKE_CURRENT_BINARY_DIR}/kalman_filters)
 
 add_executable(scan_to_pc src/scan_to_pc.cpp)
-ament_target_dependencies(scan_to_pc rclcpp sensor_msgs laser_geometry)
+ament_target_dependencies(scan_to_pc rclcpp sensor_msgs laser_geometry tf2_ros)
 
 # Include directories
 include_directories(include

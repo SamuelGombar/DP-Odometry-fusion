@@ -24,6 +24,8 @@ from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, TransformStamped
 from sensor_msgs.msg import LaserScan
+from std_msgs.msg import Float64
+from sensor_msgs.msg import JointState
 
 import math
 import socket
@@ -35,6 +37,7 @@ from .lidar import *
 from .defines import *
 from .mobile_robot import MobileRobot
 from .utils import *
+import numpy as np
 
 class Kobuki(Node):
     stop_flag = False
@@ -63,6 +66,7 @@ class Kobuki(Node):
 
     def setup_parameters(self):
         self.declare_parameter('ip_address', '127.0.0.1')
+        # self.declare_parameter('ip_address', '192.168.1.13')
         self.declare_parameter('robot_upd_port_up', 5300)
         self.declare_parameter('robot_upd_port_down', 53000)
         self.declare_parameter('lidar_upd_port_up', 5299)
@@ -77,7 +81,7 @@ class Kobuki(Node):
     def setup_publishers(self):
         self.odom_pub = self.create_publisher(Odometry, 'odom', 10)
         self.laser_scan_pub = self.create_publisher(LaserScan, 'scan', 10)
-        self.tf_broadcaster = TransformBroadcaster(self)
+        self.tf_broadcaster = TransformBroadcaster(self)        # toto si mal vymazane
         self.tf_static_broadcaster = StaticTransformBroadcaster(self)
 
     def setup_subscribers(self):
@@ -146,7 +150,9 @@ class Kobuki(Node):
             response, _ = self.robot_sock.recvfrom(1024)
 
             with self.lock:
-                self.robot_data = parse_kobuki_message(response)
+                parsed_data = parse_kobuki_message(response)
+                if isinstance(parsed_data, TKobukiData):
+                    self.robot_data = parsed_data
         print("Robot UDP receiver stopped")
     
     def lidar_udp_receiver_callback(self):
@@ -205,8 +211,13 @@ class Kobuki(Node):
         msg.twist.twist.angular.y = 0.0
         msg.twist.twist.angular.z = pose_update_rates[2]
 
+        # Covariance
+        msg.twist.covariance[0] = 1e-9    #co mas screennute
+        msg.twist.covariance[7] = 1e-9
+        msg.twist.covariance[35] = 1e-9
+
         self.odom_pub.publish(msg)
-        self.odom_to_base_link_tf(msg)
+        # self.odom_to_base_link_tf(msg)
 
     def publish_laser_scan(self, stamp: Time):
         msg = LaserScan()
@@ -227,6 +238,9 @@ class Kobuki(Node):
         msg.range_max = 5.0
         
         self.laser_scan_pub.publish(msg)
+
+    def publish_z_gyro(self, stamp: Time):
+        pass
     
     def base_link_to_base_laser_tf(self):
         t = TransformStamped()
@@ -274,7 +288,7 @@ class Kobuki(Node):
         t.transform.rotation.z = msg.pose.pose.orientation.z
         t.transform.rotation.w = msg.pose.pose.orientation.w
 
-        self.tf_broadcaster.sendTransform(t)
+        # self.tf_broadcaster.sendTransform(t)
 
 def main(args=None):
     rclpy.init(args=args)

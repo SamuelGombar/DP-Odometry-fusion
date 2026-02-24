@@ -16,6 +16,7 @@ public:
         laserscan_sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
             "/scan", rclcpp::QoS(10),
             std::bind(&LaserToPointCloudNode::laserCallback, this, std::placeholders::_1));
+        
     }
 
 private:
@@ -24,6 +25,7 @@ private:
         sensor_msgs::msg::PointCloud2 cloud_msg;
         projector_.projectLaser(*scan_msg, cloud_msg);
         cloud_msg.header = scan_msg->header;
+        // cloud_msg.header.frame_id = "odom";
         pointcloud_pub_->publish(cloud_msg);
     }
 

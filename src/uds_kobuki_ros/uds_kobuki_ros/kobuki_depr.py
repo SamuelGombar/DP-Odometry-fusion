@@ -82,14 +82,14 @@ def parse_kobuki_message(data):
     # while not at the end of the data length
     while checked_value < data[0]:
         # basic data subload
-        if data[checked_value] == 0x01:
+        if data[checked_value] == 0x01:     # expected submessage ID
             checked_value += 1
-            if data[checked_value] != 0x0F:
+            if data[checked_value] != 0x0F:     # timestamp indicator alebo subheader
                 Warning('Bad ts byte ignoring message')
             checked_value += 1
             # timestamp is not published, substitute it with uint16 time in ms
             # output.timestamp = data[checked_value + 1] * 256 + data[checked_value]
-            output.timestamp = int(time() * 1e3) & 0xffff
+            output.timestamp = int(time() * 1e3)  & 0xffff
             checked_value += 2
             output.BumperCenter = bool(data[checked_value] & 0x02)
             output.BumperLeft = bool(data[checked_value] & 0x04)
@@ -128,19 +128,34 @@ def parse_kobuki_message(data):
             output.IRSensorCenter = data[checked_value]
             checked_value += 1
             output.IRSensorLeft = data[checked_value]
-            checked_value += 1
+        # elif data[checked_value] == 0x04:
+        #     checked_value += 1                         # skip header 0x04  
+        #     length = data[checked_value]               # should be 7  
+        #     checked_value += 1  
+
+        #     # read angle (2 bytes, little endian)
+        #     raw_angle = data[checked_value] + 256 * data[checked_value + 1]
+        #     checked_value += 2
+
+        #     # read angle rate (2 bytes, little endian)
+        #     raw_angle_rate = data[checked_value] + 256 * data[checked_value + 1]
+        #     checked_value += 2
+
+        #     # skip 3 unused bytes
+        #     checked_value += 3
+
+        #     # convert if needed
+        #     angle_deg = raw_angle / 100.0
+        #     angle_rad = angle_deg * math.pi / 180.0
+
+        #     anglerate_deg_s = raw_angle_rate / 100.0
+        #     anglerate_rad_s = anglerate_deg_s * math.pi / 180.0
+
+        #     output.GyroAngle = angle_rad        # or store deg, as you prefer  
+        #     output.GyroAngleRate = anglerate_rad_s
+            # print(output.GyroAngle)
         # other conditions follow the same pattern...
         # omitted for brevity
-        elif data[checked_value] == 0x04:
-            checked_value += 1
-            if data[checked_value] != 0x07:
-                return -3
-            checked_value += 1
-            # GyroAngle is signed 16-bit in 1/100 degrees
-            output.GyroAngle = int.from_bytes(data[checked_value:checked_value+2], byteorder='little', signed=True)
-            # Normalize to radius: values are in 1/100 degrees.
-            output.GyroAngle = (output.GyroAngle / 100.0) * (math.pi / 180.0)
-
 
         else:
             checked_value += 1
@@ -169,8 +184,10 @@ def main():
             # TODO: Implement timeout 
             response, addr = robot_sock.recvfrom(1024)  # Buffer size is 1024 bytes
             kobuki_data = parse_kobuki_message(response)
-            print(kobuki_data.EncoderLeft)
-            print(kobuki_data.EncoderRight)
+            # print(kobuki_data.EncoderLeft)
+            # print(kobuki_data.EncoderRight)
+            print(f"Gyro angle: {kobuki_data.GyroAngle}")
+            print(f"Gyro omega: {kobuki_data.GyroAngleRate}")
             print('-------')
             sleep(0.01)
 

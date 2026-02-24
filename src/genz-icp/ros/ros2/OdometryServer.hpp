@@ -90,7 +90,7 @@ private:
 
     /// Global/map coordinate frame.
     std::string odom_frame_{"odom"};
-    std::string base_frame_{};
+    std::string base_frame_{"base_link"};
 };
 
 }  // namespace genz_icp_ros

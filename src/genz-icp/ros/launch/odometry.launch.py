@@ -85,13 +85,6 @@ def generate_launch_description():
                     }
                 ],
             ),
-            Node(
-                package="tf2_ros",
-                executable="static_transform_publisher",
-                name="base_link_to_base_laser_broadcaster",
-                arguments=["0", "0", "0", "0", "0", "0", "base_link", "base_laser"],
-                output="screen"
-            ),
             # Node(
             #     package="rviz2",
             #     executable="rviz2",
