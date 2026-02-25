@@ -46,7 +46,7 @@ public:
         odom_to_base.transform.rotation.w = 1.0;
 
         tf_broadcaster_->sendTransform(map_to_odom);
-        // tf_broadcaster_->sendTransform(odom_to_base);
+        tf_broadcaster_->sendTransform(odom_to_base);
 
         // Republish scan with frame_id = "base_laser"
         auto out = *msg;
