@@ -1,0 +1,10 @@
+uint64 id
+string amr_name
+PathMsg path
+uint32 trajectory_planner_version
+float64 max_velocity
+float64 velocity_multiplier
+float64 velocity_overdrive_buffer
+RobotStateMsg robot_state
+uint64 robot_model_hash
+RestrictionSetMsg[] restriction_sets

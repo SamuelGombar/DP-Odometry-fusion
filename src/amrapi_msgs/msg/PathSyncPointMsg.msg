@@ -1,0 +1,5 @@
+float64 position
+string source
+builtin_interfaces/Time target_time
+float64 target_velocity
+uint32 approach_preference

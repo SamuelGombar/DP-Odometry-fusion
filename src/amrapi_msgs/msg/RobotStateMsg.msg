@@ -1,0 +1,11 @@
+builtin_interfaces/Time stamp
+string amr_name
+float64 pose_x
+float64 pose_y
+float64 theta
+float64 linear_velocity
+float64 linear_acceleration
+float64 angular_velocity
+float64 angular_acceleration
+float64 path_position
+uint64 path_hash

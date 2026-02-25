@@ -30,6 +30,7 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(laser_geometry REQUIRED)
+find_package(amrapi_msgs REQUIRED)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../kalman_filters ${CMAKE_CURRENT_BINARY_DIR}/kalman_filters)
 
@@ -95,6 +96,15 @@ ament_target_dependencies(rosbag_republisher rclcpp nav_msgs)
 add_executable(scan_republisher src/scan_republisher.cpp)
 ament_target_dependencies(scan_republisher rclcpp sensor_msgs tf2_ros geometry_msgs)
 
+add_executable(wheel_odom_publisher src/wheel_odom_publisher.cpp)
+ament_target_dependencies(wheel_odom_publisher
+  rclcpp
+  nav_msgs
+  amrapi_msgs
+  tf2
+  tf2_ros
+  geometry_msgs)
+
 install(TARGETS 
   teleop
   fusion
@@ -105,6 +115,7 @@ install(TARGETS
   scan_to_pc
   rosbag_republisher
   scan_republisher
+  wheel_odom_publisher
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)

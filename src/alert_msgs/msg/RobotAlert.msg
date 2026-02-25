@@ -1,0 +1,12 @@
+uint32 STATUS_INFO=0
+uint32 STATUS_WARNING=1
+uint32 STATUS_ERROR=2
+uint32 STATUS_CRITICAL_ERROR=3
+uint32 STATUS_OPERATOR_PROMPT=4
+builtin_interfaces/Time stamp
+uint32 status
+string source
+string component_code
+uint32 error_code
+string description
+string structured_data

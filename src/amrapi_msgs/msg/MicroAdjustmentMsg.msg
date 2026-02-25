@@ -1,0 +1,9 @@
+uint64 request_id
+float64 offset_x
+bool offset_x_set
+float64 offset_y
+bool offset_y_set
+float64 min_adjustment
+float64 max_adjustment
+bool relative_adjustment_x
+bool relative_adjustment_y

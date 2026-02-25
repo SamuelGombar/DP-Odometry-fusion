@@ -1,0 +1,6 @@
+float64 linear
+float64 angular
+float64 linear_setpoint
+float64 angular_setpoint
+float64 linear_request
+float64 angular_request

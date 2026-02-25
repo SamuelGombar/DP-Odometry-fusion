@@ -1,0 +1,15 @@
+float64 temperature
+float64 torque
+float64 angular_speed
+float64 current
+float64 dc_bus_voltage
+bool error
+int32 active_errors
+int32 error_id
+bool driver_enabled
+bool driver_ready
+bool driver_status
+bool homed
+bool lag_warning
+bool unbraked
+string motor_state
