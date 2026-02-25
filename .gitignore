@@ -9,6 +9,7 @@ build/
 install/
 venv/
 recordings/subt_mrs_long_corridor*
+recordings/
 
 .vscode/
 

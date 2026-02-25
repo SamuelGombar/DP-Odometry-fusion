@@ -14,7 +14,7 @@ public:
 
         // Subscriber to LaserScan
         laserscan_sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
-            "/scan", rclcpp::QoS(10),
+            "/scan_merged_c", rclcpp::QoS(10),
             std::bind(&LaserToPointCloudNode::laserCallback, this, std::placeholders::_1));
         
     }

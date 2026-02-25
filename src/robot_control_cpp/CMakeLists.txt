@@ -89,6 +89,12 @@ target_include_directories(pid_control PRIVATE include)
 add_executable(scan_printing src/scan_printing.cpp)
 ament_target_dependencies(scan_printing rclcpp geometry_msgs sensor_msgs)
 
+add_executable(rosbag_republisher src/rosbag_republisher.cpp)
+ament_target_dependencies(rosbag_republisher rclcpp nav_msgs)
+
+add_executable(scan_republisher src/scan_republisher.cpp)
+ament_target_dependencies(scan_republisher rclcpp sensor_msgs tf2_ros geometry_msgs)
+
 install(TARGETS 
   teleop
   fusion
@@ -97,6 +103,8 @@ install(TARGETS
   pid_control
   kalman_filter_lib
   scan_to_pc
+  rosbag_republisher
+  scan_republisher
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
