@@ -485,7 +485,7 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
     //POCITANIE K-POSLEDNYCH TRANSF.
     static std::vector<tf2::Transform> lidar_transformations;
     static std::vector<tf2::Transform> wheel_transformations;
-    static int num_of_last_transforms = 9;
+    static int num_of_last_transforms = 3; //9
     if (lidar_transformations.size() < num_of_last_transforms) {
       lidar_transformations.insert(lidar_transformations.begin(), lidar_pose_diff);
       wheel_transformations.insert(wheel_transformations.begin(), wheel_pose_diff);
