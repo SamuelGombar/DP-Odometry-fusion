@@ -31,7 +31,7 @@ public:
       "/scan_merged", 10,
       [this](const sensor_msgs::msg::LaserScan::SharedPtr msg) {
         // Publish identity transforms for map->odom and odom->base_link
-        auto stamp = msg->header.stamp;
+        auto stamp = this->now();  // Use current time, not the old message timestamp
 
         geometry_msgs::msg::TransformStamped map_to_odom;
         map_to_odom.header.stamp = stamp;
@@ -46,11 +46,12 @@ public:
         odom_to_base.transform.rotation.w = 1.0;
 
         tf_broadcaster_->sendTransform(map_to_odom);
-        tf_broadcaster_->sendTransform(odom_to_base);
+        // tf_broadcaster_->sendTransform(odom_to_base);
 
         // Republish scan with frame_id = "base_laser"
         auto out = *msg;
         out.header.frame_id = "base_laser";
+        out.header.stamp = stamp;  // Update timestamp to current
         pub_->publish(out);
       });
   }

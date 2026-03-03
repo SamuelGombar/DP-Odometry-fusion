@@ -217,7 +217,7 @@ class Kobuki(Node):
         msg.twist.covariance[35] = 1e-9
 
         self.odom_pub.publish(msg)
-        self.odom_to_base_link_tf(msg)
+        # self.odom_to_base_link_tf(msg)
 
     def publish_laser_scan(self, stamp: Time):
         msg = LaserScan()
@@ -288,7 +288,7 @@ class Kobuki(Node):
         t.transform.rotation.z = msg.pose.pose.orientation.z
         t.transform.rotation.w = msg.pose.pose.orientation.w
 
-        self.tf_broadcaster.sendTransform(t)
+        # self.tf_broadcaster.sendTransform(t)
 
 def main(args=None):
     rclpy.init(args=args)
