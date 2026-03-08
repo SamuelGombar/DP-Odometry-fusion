@@ -55,7 +55,7 @@ ament_target_dependencies(pid_control
 target_include_directories(pid_control PRIVATE include)
 
 add_executable(odom_republisher src/bp/odom_republisher.cpp)
-ament_target_dependencies(odom_republisher rclcpp nav_msgs)
+ament_target_dependencies(odom_republisher rclcpp nav_msgs tf2_geometry_msgs geometry_msgs tf2_ros)
 
 add_executable(scan_republisher src/bp/scan_republisher.cpp)
 ament_target_dependencies(scan_republisher rclcpp sensor_msgs tf2_ros geometry_msgs)
@@ -81,6 +81,13 @@ ament_target_dependencies(wheel_odom_path
   rclcpp
   nav_msgs)
 
+# publish static TF tree: map -> odom -> base_link -> base_laser
+add_executable(tree_publisher src/bp/tree_publisher.cpp)
+ament_target_dependencies(tree_publisher
+  rclcpp
+  tf2_ros
+  geometry_msgs)
+
 install(TARGETS 
   teleop
   pid_control
@@ -90,6 +97,7 @@ install(TARGETS
   wheel_odom_publisher
   ekf_path
   wheel_odom_path
+  tree_publisher
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
