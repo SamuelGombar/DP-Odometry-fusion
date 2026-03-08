@@ -36,6 +36,7 @@
  */
 
 #include "ros2_laser_scan_matcher/laser_scan_matcher.h"
+#include <cmath>
  
 #undef min
 #undef max
@@ -67,7 +68,7 @@ LaserScanMatcher::LaserScanMatcher() : Node("laser_scan_matcher"), initialized_(
    RCLCPP_INFO(get_logger(), "Creating laser_scan_matcher");
   add_parameter("publish_odom", rclcpp::ParameterValue(std::string("odom_icp")),
     "If publish odometry from laser_scan. Empty if not, otherwise name of the topic");
-  add_parameter("publish_tf",   rclcpp::ParameterValue(false),
+  add_parameter("publish_tf",   rclcpp::ParameterValue(true),
     " If publish tf odom->base_link");
   
   add_parameter("base_frame", rclcpp::ParameterValue(std::string("base_link")),
@@ -247,8 +248,8 @@ LaserScanMatcher::LaserScanMatcher() : Node("laser_scan_matcher"), initialized_(
 
 
   // Subscribers
-  this->scan_filter_sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>("scan", rclcpp::SensorDataQoS(), std::bind(&LaserScanMatcher::scanCallback, this, std::placeholders::_1));
-  this->wheel_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>("/odom", 10, 
+  this->scan_filter_sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>("/scan_merged_c", rclcpp::SensorDataQoS(), std::bind(&LaserScanMatcher::scanCallback, this, std::placeholders::_1));
+  this->wheel_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>("/wheel_odom", 10, 
                           std::bind(&LaserScanMatcher::wheel_callback, this, std::placeholders::_1));
   tf_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
   if (publish_tf_)
@@ -512,23 +513,25 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
 
     fusion_ = fusion_ * lidar_pose_diff;
     double ratio = lidar_sum_poses_dist/wheel_sum_poses_dist;
-    static double corr_threshold = 0.2;
+    static double corr_threshold = 0.4;
+    // std::cout << ratio << std::endl;
     if ((ratio < corr_threshold)) {
+        std::cout << "CORRECTED: "<< ratio << std::endl;
         if (wheel_pose_diff.getOrigin().length() > 0.01) {
-          std::cout << ratio << (ratio < corr_threshold ? " CORRECTED" : " ") << std::endl;
           // auto correction = wheel_pose_diff;
           auto correction = lidar_pose_diff.inverse() * wheel_pose_diff;
           fusion_ = fusion_ * correction;
         }
     }
-    else if (lidar_sum_poses.getOrigin().getX() < -0.0060) {
-      std::cout << "Going backwards: " << lidar_sum_poses.getOrigin().getX() << std::endl;
-      // auto diff = lidar_pose_diff.inverse() * wheel_pose_diff;
-      tf2::Transform correction;
-      // correction.setOrigin(diff.getOrigin());
-      correction.setOrigin(-lidar_pose_diff.getOrigin());
-      correction.setRotation(tf2::Quaternion::getIdentity());
-      fusion_ = fusion_ * correction;
+    else if (lidar_sum_poses.getOrigin().getX() * wheel_sum_poses.getOrigin().getX() < 0) {
+      // std::cout << "Going backwards: " << lidar_sum_poses.getOrigin().getX() << std::endl;
+      // // auto diff = lidar_pose_diff.inverse() * wheel_pose_diff;
+      // tf2::Transform correction;
+      // // correction.setOrigin(diff.getOrigin());
+      // tf2::Vector3 origin = lidar_pose_diff.getOrigin();
+      // correction.setOrigin(tf2::Vector3(-origin.x(), 0, 0));
+      // correction.setRotation(tf2::Quaternion::getIdentity());
+      // fusion_ = fusion_ * correction;
     }
 
     nav_msgs::msg::Odometry fusion_msg;
