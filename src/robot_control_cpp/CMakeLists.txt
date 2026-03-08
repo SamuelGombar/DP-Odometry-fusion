@@ -54,8 +54,8 @@ ament_target_dependencies(pid_control
   tf2_geometry_msgs)
 target_include_directories(pid_control PRIVATE include)
 
-add_executable(rosbag_republisher src/bp/rosbag_republisher.cpp)
-ament_target_dependencies(rosbag_republisher rclcpp nav_msgs)
+add_executable(odom_republisher src/bp/odom_republisher.cpp)
+ament_target_dependencies(odom_republisher rclcpp nav_msgs)
 
 add_executable(scan_republisher src/bp/scan_republisher.cpp)
 ament_target_dependencies(scan_republisher rclcpp sensor_msgs tf2_ros geometry_msgs)
@@ -69,13 +69,27 @@ ament_target_dependencies(wheel_odom_publisher
   tf2_ros
   geometry_msgs)
 
+# publish a Path constructed from filtered odometry messages
+add_executable(ekf_path src/ekf_path.cpp)
+ament_target_dependencies(ekf_path
+  rclcpp
+  nav_msgs)
+
+# publish a Path from raw wheel odometry
+add_executable(wheel_odom_path src/bp/wheel_odom_path.cpp)
+ament_target_dependencies(wheel_odom_path
+  rclcpp
+  nav_msgs)
+
 install(TARGETS 
   teleop
   pid_control
   scan_to_pc
-  rosbag_republisher
+  odom_republisher
   scan_republisher
   wheel_odom_publisher
+  ekf_path
+  wheel_odom_path
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)

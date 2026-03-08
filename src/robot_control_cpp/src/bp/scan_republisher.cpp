@@ -28,7 +28,7 @@ public:
     static_tf_broadcaster_->sendTransform(static_tf);
 
     sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
-      "/scan_merged", 10,
+      "/scan_merged_filtered", 10,
       [this](const sensor_msgs::msg::LaserScan::SharedPtr msg) {
         // Publish identity transforms for map->odom and odom->base_link
         auto stamp = this->now();  // Use current time, not the old message timestamp

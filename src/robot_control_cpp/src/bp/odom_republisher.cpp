@@ -1,10 +1,10 @@
 #include <rclcpp/rclcpp.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
-class RosBagRepublisher : public rclcpp::Node
+class OdomRepublisher : public rclcpp::Node
 {
 public:
-  RosBagRepublisher() : Node("ros_bag_republisher")
+  OdomRepublisher() : Node("odom_republisher")
   {
     pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom_c", 10);
     sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
@@ -25,7 +25,7 @@ private:
 int main(int argc, char **argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<RosBagRepublisher>());
+  rclcpp::spin(std::make_shared<OdomRepublisher>());
   rclcpp::shutdown();
   return 0;
 }

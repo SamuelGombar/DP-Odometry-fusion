@@ -11,7 +11,7 @@ class WheelOdomPublisher : public rclcpp::Node
 public:
   WheelOdomPublisher()
   : Node("wheel_odom_publisher"),
-    x_(0.0), y_(0.0), theta_(0.0)
+    x_(0.0), y_(0.0), theta_(0.0), first_odom_(true), offset_x_(0.0), offset_y_(0.0), offset_theta_(0.0)
   {
     odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/wheel_odom", 10);
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
@@ -21,6 +21,10 @@ public:
       std::bind(&WheelOdomPublisher::velocity_callback, this, std::placeholders::_1));
 
     last_time_ = this->now();
+
+    // Publish initial odometry at 0,0
+    publishInitialOdom();
+
     RCLCPP_INFO(this->get_logger(), "Wheel odometry publisher started");
   }
 
@@ -48,18 +52,31 @@ private:
     // Normalize theta to [-pi, pi]
     theta_ = std::atan2(std::sin(theta_), std::cos(theta_));
 
-    // Create quaternion from yaw
-    tf2::Quaternion q;
-    q.setRPY(0.0, 0.0, theta_);
+    // Handle first odometry message
+    if (first_odom_) {
+      offset_x_ = x_;
+      offset_y_ = y_;
+      offset_theta_ = theta_;
+      first_odom_ = false;
+    }
 
-    // Publish odometry message
+    // Publish odometry message with offset correction
     auto odom = nav_msgs::msg::Odometry();
     odom.header.stamp = current_time;
     odom.header.frame_id = "odom";
     odom.child_frame_id = "base_link";
 
-    odom.pose.pose.position.x = x_;
-    odom.pose.pose.position.y = y_;
+    double corrected_x = x_ - offset_x_;
+    double corrected_y = y_ - offset_y_;
+    double corrected_theta = theta_ - offset_theta_;
+    corrected_theta = std::atan2(std::sin(corrected_theta), std::cos(corrected_theta));
+
+    // Create quaternion from corrected yaw
+    tf2::Quaternion q;
+    q.setRPY(0.0, 0.0, corrected_theta);
+
+    odom.pose.pose.position.x = corrected_x;
+    odom.pose.pose.position.y = corrected_y;
     odom.pose.pose.position.z = 0.0;
     odom.pose.pose.orientation.x = q.x();
     odom.pose.pose.orientation.y = q.y();
@@ -68,6 +85,11 @@ private:
 
     odom.twist.twist.linear.x = v;
     odom.twist.twist.angular.z = w;
+
+    // Set twist covariances
+    odom.twist.covariance[0] = 0.0000000001;  // variance of linear x
+    odom.twist.covariance[1] = 0.0000000001;  // variance of linear y
+    odom.twist.covariance[35] = 0.0000000001; // variance of angular z (yaw)
 
     odom_pub_->publish(odom);
 
@@ -86,11 +108,42 @@ private:
     // tf_broadcaster_->sendTransform(tf);
   }
 
+  void publishInitialOdom()
+  {
+    auto odom = nav_msgs::msg::Odometry();
+    odom.header.stamp = this->now();
+    odom.header.frame_id = "odom";
+    odom.child_frame_id = "base_link";
+
+    odom.pose.pose.position.x = 0.0;
+    odom.pose.pose.position.y = 0.0;
+    odom.pose.pose.position.z = 0.0;
+    odom.pose.pose.orientation.x = 0.0;
+    odom.pose.pose.orientation.y = 0.0;
+    odom.pose.pose.orientation.z = 0.0;
+    odom.pose.pose.orientation.w = 1.0;
+
+    odom.twist.twist.linear.x = 0.0;
+    odom.twist.twist.angular.z = 0.0;
+
+    // Set covariances
+    // odom.pose.covariance[0] = 0.000001;  // var x
+    // odom.pose.covariance[7] = 0.000001;  // var y
+    // odom.pose.covariance[35] = 0.000001; // var yaw
+    odom.twist.covariance[0] = 0.000001;  // var linear x
+    odom.twist.covariance[1] = 0.000001;  // var linear y
+    odom.twist.covariance[35] = 0.000001; // var angular z
+
+    odom_pub_->publish(odom);
+  }
+
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::Subscription<amrapi_msgs::msg::VehicleVelocityMsg>::SharedPtr vel_sub_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   rclcpp::Time last_time_;
   double x_, y_, theta_;
+  bool first_odom_;
+  double offset_x_, offset_y_, offset_theta_;
 };
 
 int main(int argc, char *argv[])
