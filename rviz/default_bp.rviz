@@ -167,7 +167,7 @@ Visualization Manager:
       Head Diameter: 0.30000001192092896
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
-      Line Style: Lines
+      Line Style: Billboards
       Line Width: 0.029999999329447746
       Name: Wheel Path
       Offset:
@@ -195,7 +195,7 @@ Visualization Manager:
       Head Diameter: 0.30000001192092896
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
-      Line Style: Lines
+      Line Style: Billboards
       Line Width: 0.029999999329447746
       Name: ICP Path
       Offset:
@@ -261,25 +261,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 9.468637466430664
+      Distance: 7.605395793914795
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -2.6179792881011963
-        Y: -0.7248508930206299
-        Z: -1.4141910076141357
+        X: -2.4255573749542236
+        Y: -0.7945101857185364
+        Z: -1.2634364366531372
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.9847968816757202
+      Pitch: 0.9197969436645508
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.380403757095337
+      Yaw: 2.1453983783721924
     Saved: ~
 Window Geometry:
   Displays:
