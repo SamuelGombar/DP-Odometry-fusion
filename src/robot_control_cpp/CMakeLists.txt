@@ -40,31 +40,10 @@ include_directories(include
                     ${rclcpp_INCLUDE_DIRS}
                     ${sensor_msgs_INCLUDE_DIRS})
 
-add_executable(teleop src/teleop.cpp)
+add_executable(teleop src/kobuki/teleop.cpp)
 ament_target_dependencies(teleop rclcpp geometry_msgs)
 
-# Create library for kalman_filter
-add_library(kalman_filter_lib src/kalman_filter.cpp)
-ament_target_dependencies(kalman_filter_lib nav_msgs)
-target_link_libraries(kalman_filter_lib Eigen3::Eigen)
-target_include_directories(kalman_filter_lib PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-
-add_executable(fusion src/fusion.cpp)
-ament_target_dependencies(fusion 
-                          rclcpp 
-                          geometry_msgs
-                          nav_msgs 
-                          tf2
-                          tf2_ros
-                          tf2_geometry_msgs
-                          sensor_msgs)
-target_link_libraries(fusion kalman_filter_lib Eigen3::Eigen)
-target_include_directories(fusion PRIVATE include)
-
-
-add_executable(pid_control src/pid_control.cpp)
+add_executable(pid_control src/kobuki/pid_control.cpp)
 ament_target_dependencies(pid_control
   rclcpp
   geometry_msgs
@@ -75,16 +54,13 @@ ament_target_dependencies(pid_control
   tf2_geometry_msgs)
 target_include_directories(pid_control PRIVATE include)
 
-add_executable(scan_printing src/scan_printing.cpp)
-ament_target_dependencies(scan_printing rclcpp geometry_msgs sensor_msgs)
-
-add_executable(rosbag_republisher src/rosbag_republisher.cpp)
+add_executable(rosbag_republisher src/bp/rosbag_republisher.cpp)
 ament_target_dependencies(rosbag_republisher rclcpp nav_msgs)
 
-add_executable(scan_republisher src/scan_republisher.cpp)
+add_executable(scan_republisher src/bp/scan_republisher.cpp)
 ament_target_dependencies(scan_republisher rclcpp sensor_msgs tf2_ros geometry_msgs)
 
-add_executable(wheel_odom_publisher src/wheel_odom_publisher.cpp)
+add_executable(wheel_odom_publisher src/bp/wheel_odom_publisher.cpp)
 ament_target_dependencies(wheel_odom_publisher
   rclcpp
   nav_msgs
@@ -95,10 +71,7 @@ ament_target_dependencies(wheel_odom_publisher
 
 install(TARGETS 
   teleop
-  fusion
-  scan_printing
   pid_control
-  kalman_filter_lib
   scan_to_pc
   rosbag_republisher
   scan_republisher
