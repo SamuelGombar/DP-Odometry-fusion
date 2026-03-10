@@ -1,0 +1,9 @@
+float64 setpoint
+float64 position
+float64 setpoint_from_ground
+float64 position_from_ground
+bool initializing
+bool initialized
+bool homing
+bool homed
+bool error

@@ -1,0 +1,16 @@
+uint32 id
+string name
+string hw_status
+float64 flipper_position
+bool flipper_powered
+float64 shift_position
+float64 height
+string initializing_step
+string loading_step
+string unloading_step
+string shift_calib_step
+bool initializing
+bool initialized
+bool loaded
+bool box_present
+bool error

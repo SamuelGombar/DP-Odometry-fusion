@@ -31,6 +31,7 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(laser_geometry REQUIRED)
 find_package(amrapi_msgs REQUIRED)
+find_package(hw_layer_msgs REQUIRED)
 
 add_executable(scan_to_pc src/scan_to_pc.cpp)
 ament_target_dependencies(scan_to_pc rclcpp sensor_msgs laser_geometry tf2_ros)
@@ -88,6 +89,15 @@ ament_target_dependencies(tree_publisher
   tf2_ros
   geometry_msgs)
 
+# convert hw_layer IMU to standard sensor_msgs/Imu
+add_executable(imu_publisher src/bp/imu_publisher.cpp)
+ament_target_dependencies(imu_publisher
+  rclcpp
+  sensor_msgs
+  hw_layer_msgs
+  tf2
+  geometry_msgs)
+
 install(TARGETS 
   teleop
   pid_control
@@ -98,6 +108,7 @@ install(TARGETS
   ekf_path
   wheel_odom_path
   tree_publisher
+  imu_publisher
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)

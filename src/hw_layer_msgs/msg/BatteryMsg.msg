@@ -1,0 +1,15 @@
+uint32 STATE_ID_WAITING_FOR_HW=0
+uint32 STATE_ID_BMS_NOT_INITIALIZED=1
+uint32 STATE_ID_WAITING_FOR_VALID_DATA=2
+uint32 STATE_ID_READY=3
+uint32 STATE_ID_UNKNOWN_ERROR=100
+uint32 STATE_ID_BMS_YAML_PARAM_MISMATCH_ERROR=101
+uint32 STATE_ID_TOTAL_CHARGED_CAPACITY_OVER_LIMIT=102
+ComponentHeaderMsg header
+ComponentStateMsg state
+uint32 type
+float64 level
+float64 level_ah
+float64 total_charged_ah
+float64 voltage
+float64 current

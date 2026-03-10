@@ -1,0 +1,5 @@
+float64 angle
+float64 linear_speed_cap
+float64 angular_speed_cap
+bool is_initialized
+bool movement_is_finished

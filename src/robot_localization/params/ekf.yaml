@@ -30,13 +30,22 @@ ekf_filter_node:
                    false, false, false,
                    false, false, false,
                    false, false, false]
+    imu0: /imu
+    imu0_config: [false, false, false,
+                  false, false, false,
+                  false, false, false,
+                  false, false, true,
+                  false, false, false]
 
     odom0_differential: false
     odom1_differential: false
+    imu0_differential: false
     odom0_relative: false
     odom1_relative: false
+    imu0_relative: false
     odom0_nodelay: true
     odom1_nodelay: true
+    imu0_nodelay: true
     stamped_control: false
     use_control: false    #skus aj false
     control_timeout: 0.2

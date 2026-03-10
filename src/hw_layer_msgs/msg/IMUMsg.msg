@@ -1,0 +1,13 @@
+uint32 STATE_ID_WAITING_FOR_HW=0
+uint32 STATE_ID_READY=1
+uint32 STATE_ID_UNKNOWN_ERROR=100
+uint32 STATE_ID_COMMUNICATION_ERROR=101
+ComponentHeaderMsg header
+ComponentStateMsg state
+float64 angle_x
+float64 angle_y
+float64 angle_z
+float64 acceleration_x
+float64 acceleration_y
+float64 acceleration_z
+float64 timestamp

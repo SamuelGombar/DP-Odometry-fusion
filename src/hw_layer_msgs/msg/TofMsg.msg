@@ -1,0 +1,3 @@
+ComponentHeaderMsg header
+ComponentStateMsg state
+uint32 distance

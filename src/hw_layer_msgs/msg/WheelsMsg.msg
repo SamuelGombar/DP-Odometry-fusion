@@ -1,0 +1,3 @@
+builtin_interfaces/Time time
+float64 left_position
+float64 right_position

@@ -1,0 +1,9 @@
+uint32 id
+builtin_interfaces/Time time
+float64 left_motor_setpoint
+float64 right_motor_setpoint
+float64 max_command_duration
+float64 max_motor_deceleration
+float32[] future_stop_relative_times
+float32[] future_stop_left_motor_setpoints
+float32[] future_stop_right_motor_setpoints

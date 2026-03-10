@@ -1,0 +1,10 @@
+LiftAddonLiftAxisBriefInfoMsg lift
+LiftAddonDrawerBriefInfoMsg[] drawers
+string addon_state
+bool error
+bool picker_mode
+bool initializing
+bool initialized
+bool amr_blocked
+bool stop_addon_cmd
+bool ack_error_cmd
