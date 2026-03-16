@@ -82,13 +82,6 @@ ament_target_dependencies(wheel_odom_path
   rclcpp
   nav_msgs)
 
-# publish static TF tree: map -> odom -> base_link -> base_laser
-add_executable(tree_publisher src/bp/tree_publisher.cpp)
-ament_target_dependencies(tree_publisher
-  rclcpp
-  tf2_ros
-  geometry_msgs)
-
 # convert hw_layer IMU to standard sensor_msgs/Imu
 add_executable(imu_publisher src/bp/imu_publisher.cpp)
 ament_target_dependencies(imu_publisher
@@ -107,7 +100,6 @@ install(TARGETS
   wheel_odom_publisher
   ekf_path
   wheel_odom_path
-  tree_publisher
   imu_publisher
   DESTINATION lib/${PROJECT_NAME})
 

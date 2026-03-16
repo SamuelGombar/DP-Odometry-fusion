@@ -8,6 +8,7 @@ Panels:
         - /Status1
         - /GenZ1/Shape1
         - /EKF1/Shape1
+        - /EKF Path1
       Splitter Ratio: 0.5088235139846802
     Tree Height: 707
   - Class: rviz_common/Selection
@@ -265,7 +266,7 @@ Visualization Manager:
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
       Line Style: Billboards
-      Line Width: 0.029999999329447746
+      Line Width: 0.009999999776482582
       Name: EKF Path
       Offset:
         X: 0
@@ -396,25 +397,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 5.8777546882629395
+      Distance: 1.9659676551818848
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -1.7654614448547363
-        Y: -0.021394670009613037
-        Z: 0.08130491524934769
+        X: -3.681166410446167
+        Y: -0.20381495356559753
+        Z: -0.29960957169532776
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8403983116149902
+      Pitch: 0.9603981971740723
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.1903979778289795
+      Yaw: 2.3254013061523438
     Saved: ~
 Window Geometry:
   Displays:

@@ -40,7 +40,7 @@ private:
     }
 
     double v = msg->linear;
-    double w = msg->angular;
+    double w = -msg->angular;
 
     // Integrate pose using midpoint method
     double delta_theta = w * dt;
