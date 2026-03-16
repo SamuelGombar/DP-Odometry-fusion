@@ -1,0 +1,3 @@
+/usr/bin/gnome-terminal --tab -- bash -c "ros2 bag play /home/samuelg9/ros2_ws_host/recordings/candy_7m --exclude-topics "/hw_layer/addon_mission_state"; exec bash" &
+/usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp groundtruth_republisher; exec bash" &
+/usr/bin/gnome-terminal --tab -- bash -c "ros2 bag record --topics /ground_truth -o /home/samuelg9/ros2_ws_host/recordings/ground_truth_topic_candy_7m; exec bash" &

@@ -91,6 +91,22 @@ ament_target_dependencies(imu_publisher
   tf2
   geometry_msgs)
 
+add_executable(groundtruth_republisher src/bp/groundtruth_republisher.cpp)
+ament_target_dependencies(groundtruth_republisher
+  rclcpp
+  nav_msgs
+  geometry_msgs
+  tf2
+  tf2_ros
+  tf2_geometry_msgs)
+
+add_executable(gt_wrapper src/bp/gt_wrapper.cpp)
+ament_target_dependencies(gt_wrapper
+  rclcpp
+  nav_msgs
+  tf2
+  tf2_geometry_msgs)
+
 install(TARGETS 
   teleop
   pid_control
@@ -101,6 +117,8 @@ install(TARGETS
   ekf_path
   wheel_odom_path
   imu_publisher
+  groundtruth_republisher
+  gt_wrapper
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)

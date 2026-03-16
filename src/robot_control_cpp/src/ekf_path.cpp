@@ -11,7 +11,7 @@ public:
     // topic names can be adjusted via parameters if needed
     odom_topic_ = this->declare_parameter<std::string>("odometry_topic", "/odometry/filtered");
     path_topic_ = this->declare_parameter<std::string>("path_topic", "/odometry/path");
-    max_poses_ = this->declare_parameter<int>("max_poses", 5000);
+    max_poses_ = this->declare_parameter<int>("max_poses", 30000);
 
     odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
       odom_topic_, 10,
