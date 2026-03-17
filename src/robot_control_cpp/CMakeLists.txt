@@ -71,8 +71,8 @@ ament_target_dependencies(wheel_odom_publisher
   geometry_msgs)
 
 # publish a Path constructed from filtered odometry messages
-add_executable(ekf_path src/ekf_path.cpp)
-ament_target_dependencies(ekf_path
+add_executable(odom_to_path src/odom_to_path.cpp)
+ament_target_dependencies(odom_to_path
   rclcpp
   nav_msgs)
 
@@ -114,7 +114,7 @@ install(TARGETS
   odom_republisher
   scan_republisher
   wheel_odom_publisher
-  ekf_path
+  odom_to_path
   wheel_odom_path
   imu_publisher
   groundtruth_republisher

@@ -3,9 +3,9 @@
 #include <nav_msgs/msg/path.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
-class EkfPathNode : public rclcpp::Node {
+class PathNode : public rclcpp::Node {
 public:
-  EkfPathNode()
+  PathNode()
   : Node("odometry_path")
   {
     // topic names can be adjusted via parameters if needed
@@ -15,7 +15,7 @@ public:
 
     odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
       odom_topic_, 10,
-      std::bind(&EkfPathNode::odomCallback, this, std::placeholders::_1));
+      std::bind(&PathNode::odomCallback, this, std::placeholders::_1));
 
     path_pub_ = this->create_publisher<nav_msgs::msg::Path>(path_topic_, 10);
     path_msg_.header.frame_id = "odom";  // will be overridden by incoming message if desired
@@ -48,7 +48,7 @@ private:
 
 int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<EkfPathNode>());
+  rclcpp::spin(std::make_shared<PathNode>());
   rclcpp::shutdown();
   return 0;
 }
