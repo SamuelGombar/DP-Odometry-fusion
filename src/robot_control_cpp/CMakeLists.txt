@@ -76,12 +76,6 @@ ament_target_dependencies(odom_to_path
   rclcpp
   nav_msgs)
 
-# publish a Path from raw wheel odometry
-add_executable(wheel_odom_path src/bp/wheel_odom_path.cpp)
-ament_target_dependencies(wheel_odom_path
-  rclcpp
-  nav_msgs)
-
 # convert hw_layer IMU to standard sensor_msgs/Imu
 add_executable(imu_publisher src/bp/imu_publisher.cpp)
 ament_target_dependencies(imu_publisher
@@ -115,7 +109,6 @@ install(TARGETS
   scan_republisher
   wheel_odom_publisher
   odom_to_path
-  wheel_odom_path
   imu_publisher
   groundtruth_republisher
   gt_wrapper
