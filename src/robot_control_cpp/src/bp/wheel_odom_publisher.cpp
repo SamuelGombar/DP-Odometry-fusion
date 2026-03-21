@@ -71,9 +71,10 @@ private:
     double corrected_theta = theta_ - offset_theta_;
     corrected_theta = std::atan2(std::sin(corrected_theta), std::cos(corrected_theta));
 
-    // Create quaternion from corrected yaw
+    // Create quaternion from corrected yaw, shifted by 180 degrees
     tf2::Quaternion q;
-    q.setRPY(0.0, 0.0, corrected_theta);
+    double shifted_theta = std::atan2(std::sin(corrected_theta - M_PI), std::cos(corrected_theta - M_PI));
+    q.setRPY(0.0, 0.0, shifted_theta);
 
     odom.pose.pose.position.x = corrected_x;
     odom.pose.pose.position.y = corrected_y;
