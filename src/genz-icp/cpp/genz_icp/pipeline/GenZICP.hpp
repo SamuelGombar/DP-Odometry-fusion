@@ -55,6 +55,9 @@ struct GenZConfig {
     // registration params
     int max_num_iterations = 150;
     double convergence_criterion = 0.0001;
+
+    // map filtering
+    int min_consecutive_observations = 1;
 };
 
 class GenZICP {
@@ -66,7 +69,7 @@ public:
     explicit GenZICP(const GenZConfig &config)
         : config_(config),
           registration_(config.max_num_iterations, config.convergence_criterion),
-          local_map_(config.voxel_size, config.max_range, config.map_cleanup_radius, config.planarity_threshold, config.max_points_per_voxel),
+          local_map_(config.voxel_size, config.max_range, config.map_cleanup_radius, config.planarity_threshold, config.max_points_per_voxel, config.min_consecutive_observations),
           adaptive_threshold_(config.initial_threshold, config.min_motion_th, config.max_range) {}
 
     GenZICP() : GenZICP(GenZConfig{}) {}

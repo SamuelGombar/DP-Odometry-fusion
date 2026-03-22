@@ -74,6 +74,7 @@ OdometryServer::OdometryServer(const rclcpp::NodeOptions &options)
     declare_parameter<double>("convergence_criterion", config_.convergence_criterion);
     declare_parameter<double>("initial_threshold", config_.initial_threshold);
     declare_parameter<double>("min_motion_th", config_.min_motion_th);
+    declare_parameter<int>("min_consecutive_observations", config_.min_consecutive_observations);
     declare_parameter<std::string>("config_file", "");
 
     // Load the configuration file
@@ -129,6 +130,7 @@ OdometryServer::OdometryServer(const rclcpp::NodeOptions &options)
     config_.convergence_criterion = get_parameter("convergence_criterion").as_double();
     config_.initial_threshold = get_parameter("initial_threshold").as_double();
     config_.min_motion_th = get_parameter("min_motion_th").as_double();
+    config_.min_consecutive_observations = get_parameter("min_consecutive_observations").as_int();
     if (config_.max_range < config_.min_range) {
         RCLCPP_WARN(get_logger(), "[WARNING] max_range is smaller than min_range, settng min_range to 0.0");
         config_.min_range = 0.0;

@@ -218,6 +218,7 @@ std::vector<Eigen::Vector3d> VoxelHashMap::Pointcloud() const {
 }
 
 void VoxelHashMap::Update(const Vector3dVector &points, const Eigen::Vector3d &origin) {
+    frame_counter_++;
     AddPoints(points);
     RemovePointsFarFromLocation(origin);
 }
@@ -237,8 +238,28 @@ void VoxelHashMap::AddPoints(const std::vector<Eigen::Vector3d> &points) {
         if (search != map_.end()) {
             auto &voxel_block = search.value();
             voxel_block.AddPoint(point);
-        } else {
+        } else if (min_consecutive_observations_ <= 1) {
             map_.insert({voxel, VoxelBlock(point, max_points_per_voxel_)});
+        } else {
+            auto cand = candidate_map_.find(voxel);
+            if (cand != candidate_map_.end()) {
+                auto &info = cand.value();
+                if (info.last_seen_frame == frame_counter_ - 1) {
+                    info.consecutive_count++;
+                    info.last_seen_frame = frame_counter_;
+                    info.point = point;
+                    if (info.consecutive_count >= min_consecutive_observations_) {
+                        map_.insert({voxel, VoxelBlock(point, max_points_per_voxel_)});
+                        candidate_map_.erase(cand);
+                    }
+                } else {
+                    info.consecutive_count = 1;
+                    info.last_seen_frame = frame_counter_;
+                    info.point = point;
+                }
+            } else {
+                candidate_map_.insert({voxel, {point, frame_counter_, 1}});
+            }
         }
     });
 }
@@ -250,6 +271,15 @@ void VoxelHashMap::RemovePointsFarFromLocation(const Eigen::Vector3d &origin) {
             it = map_.erase(it);
         } else {
             ++it;
+        }
+    }
+    if (min_consecutive_observations_ > 1) {
+        for (auto it = candidate_map_.begin(); it != candidate_map_.end();) {
+            if ((it->second.point - origin).squaredNorm() > max_distance2) {
+                it = candidate_map_.erase(it);
+            } else {
+                ++it;
+            }
         }
     }
 }

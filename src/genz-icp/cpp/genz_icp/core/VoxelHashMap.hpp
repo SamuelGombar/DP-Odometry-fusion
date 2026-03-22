@@ -57,13 +57,21 @@ struct VoxelHashMap {
         }
     };
 
+    struct CandidateVoxel {
+        Eigen::Vector3d point;
+        int last_seen_frame;
+        int consecutive_count;
+    };
+
     explicit VoxelHashMap(double voxel_size, double max_distance, double map_cleanup_radius,
-                          double planarity_threshold, int max_points_per_voxel)
+                          double planarity_threshold, int max_points_per_voxel,
+                          int min_consecutive_observations = 1)
         : voxel_size_(voxel_size),
           max_distance_(max_distance),
           map_cleanup_radius_(map_cleanup_radius),
           planarity_threshold_(planarity_threshold),
-          max_points_per_voxel_(max_points_per_voxel) {}
+          max_points_per_voxel_(max_points_per_voxel),
+          min_consecutive_observations_(min_consecutive_observations) {}
 
     Vector3dVectorTuple7 GetCorrespondences(const Vector3dVector &points,
                                            double max_correspondance_distance) const;
@@ -83,6 +91,9 @@ struct VoxelHashMap {
     double map_cleanup_radius_;
     double planarity_threshold_;
     int max_points_per_voxel_;
+    int min_consecutive_observations_;
+    int frame_counter_ = 0;
     tsl::robin_map<Voxel, VoxelBlock, VoxelHash> map_;
+    tsl::robin_map<Voxel, CandidateVoxel, VoxelHash> candidate_map_;
 };
 }  // namespace genz_icp

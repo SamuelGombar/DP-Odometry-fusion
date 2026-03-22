@@ -35,12 +35,34 @@ def generate_launch_description():
     return LaunchDescription(
         [
             # ROS 2 parameters
+            # DeclareLaunchArgument("topic", description="sensor_msg/PointCloud2 topic to process"),
+            # DeclareLaunchArgument("bagfile", default_value=""),
+            # DeclareLaunchArgument("visualize", default_value="true"),
+            # DeclareLaunchArgument("odom_frame", default_value="odom"),
+            # DeclareLaunchArgument("base_frame", default_value=""),
+            # DeclareLaunchArgument("publish_odom_tf", default_value="false"),
+            # # GenZ-ICP parameters
+            # DeclareLaunchArgument("deskew", default_value="false"),
+            # DeclareLaunchArgument("max_range", default_value="4.0"),
+            # DeclareLaunchArgument("min_range", default_value="0.1"),
+            # # This thing is still not suported: https://github.com/ros2/launch/issues/290#issuecomment-1438476902
+            # #  DeclareLaunchArgument("voxel_size", default_value=None),
+            # DeclareLaunchArgument("voxel_size", default_value="1.0"),
+            # DeclareLaunchArgument("map_cleanup_radius", default_value="4.0"),
+            # DeclareLaunchArgument("desired_num_voxelized_points", default_value="4000"), #2000
+            # DeclareLaunchArgument("planarity_threshold", default_value="0.3"),
+            # DeclareLaunchArgument("max_points_per_voxel", default_value="1"),       #higher numbers ruin it
+            # DeclareLaunchArgument("max_num_iterations", default_value="100"),
+            # DeclareLaunchArgument("convergence_criterion", default_value="0.0001"),
+            # DeclareLaunchArgument("initial_threshold", default_value="2.0"),
+            # DeclareLaunchArgument("min_motion_th", default_value="0.1"),
+            # DeclareLaunchArgument("config_file", default_value=""),
             DeclareLaunchArgument("topic", description="sensor_msg/PointCloud2 topic to process"),
             DeclareLaunchArgument("bagfile", default_value=""),
             DeclareLaunchArgument("visualize", default_value="true"),
             DeclareLaunchArgument("odom_frame", default_value="odom"),
             DeclareLaunchArgument("base_frame", default_value=""),
-            DeclareLaunchArgument("publish_odom_tf", default_value="false"),
+            DeclareLaunchArgument("publish_odom_tf", default_value="true"),
             # GenZ-ICP parameters
             DeclareLaunchArgument("deskew", default_value="false"),
             DeclareLaunchArgument("max_range", default_value="100.0"),
@@ -56,6 +78,7 @@ def generate_launch_description():
             DeclareLaunchArgument("convergence_criterion", default_value="0.0001"),
             DeclareLaunchArgument("initial_threshold", default_value="2.0"),
             DeclareLaunchArgument("min_motion_th", default_value="0.1"),
+            DeclareLaunchArgument("min_consecutive_observations", default_value="2"),
             DeclareLaunchArgument("config_file", default_value=""),
             Node(
                 package="genz_icp",
@@ -79,6 +102,7 @@ def generate_launch_description():
                         "convergence_criterion": LaunchConfiguration("convergence_criterion"),
                         "initial_threshold": 2.0,
                         "min_motion_th": 0.1,
+                        "min_consecutive_observations": LaunchConfiguration("min_consecutive_observations"),
                         "publish_odom_tf": LaunchConfiguration("publish_odom_tf"),
                         "visualize": LaunchConfiguration("visualize"),
                         "config_file": LaunchConfiguration("config_file"),
