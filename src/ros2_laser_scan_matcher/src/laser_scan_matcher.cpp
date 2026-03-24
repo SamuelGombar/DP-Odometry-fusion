@@ -79,7 +79,7 @@ LaserScanMatcher::LaserScanMatcher() : Node("laser_scan_matcher"), initialized_(
     "Which frame to use for the map");
   add_parameter("laser_frame", rclcpp::ParameterValue(std::string("base_laser")),
     "Which frame to use for the laser");
-  add_parameter("kf_dist_linear", rclcpp::ParameterValue(0.30), //0.10
+  add_parameter("kf_dist_linear", rclcpp::ParameterValue(0.10), //0.10
     "When to generate keyframe scan.");
   add_parameter("kf_dist_angular", rclcpp::ParameterValue(10.0* (M_PI/180.0)),
     "When to generate keyframe scan.");
@@ -93,7 +93,7 @@ LaserScanMatcher::LaserScanMatcher() : Node("laser_scan_matcher"), initialized_(
   add_parameter("max_linear_correction", rclcpp::ParameterValue(0.5),
     "Maximum translation between scans (m).");
 
-  add_parameter("max_iterations", rclcpp::ParameterValue(25), //10
+  add_parameter("max_iterations", rclcpp::ParameterValue(10), //10
     "Maximum ICP cycle iterationsr.");
 
   add_parameter("epsilon_xy", rclcpp::ParameterValue(0.000001),
@@ -105,7 +105,7 @@ LaserScanMatcher::LaserScanMatcher() : Node("laser_scan_matcher"), initialized_(
   add_parameter("max_correspondence_dist", rclcpp::ParameterValue(0.3),
     "Maximum distance for a correspondence to be valid.");
 
-  add_parameter("sigma", rclcpp::ParameterValue(0.0010), //0.010
+  add_parameter("sigma", rclcpp::ParameterValue(0.010), //0.010
     "Noise in the scan (m).");
 
   add_parameter("use_corr_tricks", rclcpp::ParameterValue(0), //0
@@ -129,7 +129,7 @@ LaserScanMatcher::LaserScanMatcher() : Node("laser_scan_matcher"), initialized_(
   add_parameter("orientation_neighbourhood", rclcpp::ParameterValue(20),
     "Number of neighbour rays used to estimate the orientation.");
   
-  add_parameter("use_point_to_line_distance", rclcpp::ParameterValue(0),
+  add_parameter("use_point_to_line_distance", rclcpp::ParameterValue(1),
     "If 0, it's vanilla ICP.");
 
   add_parameter("do_alpha_test", rclcpp::ParameterValue(0),
@@ -237,6 +237,8 @@ LaserScanMatcher::LaserScanMatcher() : Node("laser_scan_matcher"), initialized_(
   f2b_kf_.setIdentity();
   fusion_.setIdentity();
   prev_fusion_.setIdentity();
+  imu_orientation_.setValue(0.0, 0.0, 0.0, 1.0);
+  imu_received_ = false;
   input_.laser[0] = 0.0;
   input_.laser[1] = 0.0;
   input_.laser[2] = 0.0;
@@ -251,6 +253,8 @@ LaserScanMatcher::LaserScanMatcher() : Node("laser_scan_matcher"), initialized_(
   this->scan_filter_sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>("/scan_merged_c", rclcpp::SensorDataQoS(), std::bind(&LaserScanMatcher::scanCallback, this, std::placeholders::_1));
   this->wheel_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>("/wheel_odom", 10, 
                           std::bind(&LaserScanMatcher::wheel_callback, this, std::placeholders::_1));
+  this->imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>("/imu", rclcpp::SensorDataQoS(),
+                          std::bind(&LaserScanMatcher::imuCallback, this, std::placeholders::_1));
   tf_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
   if (publish_tf_)
     tfB_ = std::make_shared<tf2_ros::TransformBroadcaster>(*this);
@@ -283,6 +287,17 @@ void LaserScanMatcher::createCache (const sensor_msgs::msg::LaserScan::SharedPtr
   input_.max_reading = scan_msg->range_max;
 }
 	
+void LaserScanMatcher::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
+{
+  imu_orientation_.setValue(
+    msg->orientation.x,
+    msg->orientation.y,
+    msg->orientation.z,
+    msg->orientation.w
+  );
+  imu_received_ = true;
+}
+
 void LaserScanMatcher::wheel_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
   wheel_f2b_.setOrigin(tf2::Vector3(
@@ -513,14 +528,22 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
 
     fusion_ = fusion_ * lidar_pose_diff;
     double ratio = lidar_sum_poses_dist/wheel_sum_poses_dist;
-    static double corr_threshold = 0.4;
+    static double corr_threshold = 0.1;
     // std::cout << ratio << std::endl;
     if ((ratio < corr_threshold)) {
         std::cout << "CORRECTED: "<< ratio << std::endl;
         if (wheel_pose_diff.getOrigin().length() > 0.01) {
-          // auto correction = wheel_pose_diff;
           auto correction = lidar_pose_diff.inverse() * wheel_pose_diff;
-          fusion_ = fusion_ * correction;
+          // Apply only the translation part, preserve current rotation
+          tf2::Transform translation_only;
+          translation_only.setOrigin(correction.getOrigin());
+          translation_only.setRotation(tf2::Quaternion::getIdentity());
+          fusion_ = fusion_ * translation_only;
+        // std::cout << "CORRECTED: "<< ratio << std::endl;
+        // if (wheel_pose_diff.getOrigin().length() > 0.01) {
+        //   // auto correction = wheel_pose_diff;
+        //   auto correction = lidar_pose_diff.inverse() * wheel_pose_diff;
+        //   fusion_ = fusion_ * correction;
         }
     }
     else if (lidar_sum_poses.getOrigin().getX() * wheel_sum_poses.getOrigin().getX() < 0) {
@@ -544,6 +567,14 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
     fusion_msg.pose.pose.position.y = fusion_.getOrigin().y();
     fusion_msg.pose.pose.position.z = fusion_.getOrigin().z();
 
+    // Use absolute IMU yaw for Z-axis rotation
+    // double imu_yaw = tf2::getYaw(imu_orientation_);
+    // tf2::Quaternion q;
+    // q.setRPY(0.0, 0.0, imu_yaw);
+    // fusion_msg.pose.pose.orientation.x = q.x();
+    // fusion_msg.pose.pose.orientation.y = q.y();
+    // fusion_msg.pose.pose.orientation.z = q.z();
+    // fusion_msg.pose.pose.orientation.w = q.w();
     fusion_msg.pose.pose.orientation.x = fusion_.getRotation().x();
     fusion_msg.pose.pose.orientation.y = fusion_.getRotation().y();
     fusion_msg.pose.pose.orientation.z = fusion_.getRotation().z();
@@ -563,13 +594,13 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
   if (publish_tf_)
   {
     geometry_msgs::msg::TransformStamped tf_msg;
-    tf_msg.transform.translation.x = f2b_.getOrigin().x();
-    tf_msg.transform.translation.y = f2b_.getOrigin().y();
-    tf_msg.transform.translation.z = f2b_.getOrigin().z();
-    tf_msg.transform.rotation.x = f2b_.getRotation().x();
-    tf_msg.transform.rotation.y = f2b_.getRotation().y();
-    tf_msg.transform.rotation.z = f2b_.getRotation().z();
-    tf_msg.transform.rotation.w = f2b_.getRotation().w();
+    tf_msg.transform.translation.x = fusion_.getOrigin().x();
+    tf_msg.transform.translation.y = fusion_.getOrigin().y();
+    tf_msg.transform.translation.z = fusion_.getOrigin().z();
+    tf_msg.transform.rotation.x = fusion_.getRotation().x();
+    tf_msg.transform.rotation.y = fusion_.getRotation().y();
+    tf_msg.transform.rotation.z = fusion_.getRotation().z();
+    tf_msg.transform.rotation.w = fusion_.getRotation().w();
   
     tf_msg.header.stamp = time;
     tf_msg.header.frame_id = odom_frame_;

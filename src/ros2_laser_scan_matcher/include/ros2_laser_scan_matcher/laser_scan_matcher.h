@@ -39,6 +39,7 @@
 #define LASER_SCAN_MATCHER_LASER_SCAN_MATCHER_H
 
 #include <sensor_msgs/msg/laser_scan.hpp>
+#include <sensor_msgs/msg/imu.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tf2_ros/transform_broadcaster.h>
@@ -63,6 +64,7 @@ public:
 
   void scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan_msg);
   void wheel_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
+  void imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
 
 
 private:
@@ -70,6 +72,7 @@ private:
 
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_filter_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr wheel_odom_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
 
   std::shared_ptr<tf2_ros::TransformListener> tf_;
   std::shared_ptr<tf2_ros::TransformBroadcaster> tfB_;
@@ -106,6 +109,9 @@ private:
   tf2::Transform fusion_f2b_;
 
   tf2::Transform odom_to_base_tf;
+
+  tf2::Quaternion imu_orientation_;
+  bool imu_received_;
 
   sm_params input_;
   sm_result output_;

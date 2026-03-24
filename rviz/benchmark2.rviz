@@ -136,55 +136,45 @@ Visualization Manager:
           Value: true
         robot_geometric_state:
           Value: true
-        runner_Anquetil:
+        runner_Agassi:
           Value: true
-        runner_Armstrong:
+        runner_Ales:
           Value: true
-        runner_Bigmac:
+        runner_Badadam:
           Value: true
-        runner_Boris:
+        runner_Barny:
           Value: true
-        runner_Cavendish:
+        runner_Bruce:
           Value: true
-        runner_Contador:
+        runner_Chuck:
           Value: true
-        runner_Coppi:
+        runner_Curry:
           Value: true
-        runner_Filip:
+        runner_Eliska:
           Value: true
-        runner_Frodo:
+        runner_Flicker:
           Value: true
-        runner_Froome:
+        runner_Funky:
           Value: true
-        runner_Gega:
+        runner_Heyhey:
           Value: true
-        runner_Gordon:
+        runner_Honza:
           Value: true
-        runner_Hana:
+        runner_Janci:
           Value: true
-        runner_Hinault:
+        runner_Lukas:
           Value: true
-        runner_Indurain:
+        runner_Molly:
           Value: true
-        runner_Katarina:
+        runner_Norris:
           Value: true
-        runner_Knedla:
+        runner_Racer:
           Value: true
-        runner_Pantani:
+        runner_Spark:
           Value: true
-        runner_Pivo:
+        runner_Svartur:
           Value: true
-        runner_Sagan:
-          Value: true
-        runner_Schurter:
-          Value: true
-        runner_Smaug:
-          Value: true
-        runner_Valverde:
-          Value: true
-        runner_Velits:
-          Value: true
-        runner_Wiggins:
+        runner_Twirl:
           Value: true
         wheels:
           Value: true
@@ -202,55 +192,45 @@ Visualization Manager:
               {}
           robot_geometric_state:
             {}
-          runner_Anquetil:
+          runner_Agassi:
             {}
-          runner_Armstrong:
+          runner_Ales:
             {}
-          runner_Bigmac:
+          runner_Badadam:
             {}
-          runner_Boris:
+          runner_Barny:
             {}
-          runner_Cavendish:
+          runner_Bruce:
             {}
-          runner_Contador:
+          runner_Chuck:
             {}
-          runner_Coppi:
+          runner_Curry:
             {}
-          runner_Filip:
+          runner_Eliska:
             {}
-          runner_Frodo:
+          runner_Flicker:
             {}
-          runner_Froome:
+          runner_Funky:
             {}
-          runner_Gega:
+          runner_Heyhey:
             {}
-          runner_Gordon:
+          runner_Honza:
             {}
-          runner_Hana:
+          runner_Janci:
             {}
-          runner_Hinault:
+          runner_Lukas:
             {}
-          runner_Indurain:
+          runner_Molly:
             {}
-          runner_Katarina:
+          runner_Norris:
             {}
-          runner_Knedla:
+          runner_Racer:
             {}
-          runner_Pantani:
+          runner_Spark:
             {}
-          runner_Pivo:
+          runner_Svartur:
             {}
-          runner_Sagan:
-            {}
-          runner_Schurter:
-            {}
-          runner_Smaug:
-            {}
-          runner_Valverde:
-            {}
-          runner_Velits:
-            {}
-          runner_Wiggins:
+          runner_Twirl:
             {}
       Update Interval: 0
       Value: true
@@ -313,7 +293,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: odom
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -356,16 +336,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 28.783367156982422
+      Distance: 19.745502471923828
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -21.005996704101562
-        Y: 21.96318244934082
-        Z: -4.076284885406494
+        X: -12.14867877960205
+        Y: -31.862220764160156
+        Z: -4.027054309844971
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
@@ -374,7 +354,7 @@ Visualization Manager:
       Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.8146262168884277
+      Yaw: 4.71464729309082
     Saved: ~
 Window Geometry:
   Displays:
