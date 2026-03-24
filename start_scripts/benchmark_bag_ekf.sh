@@ -1,5 +1,5 @@
 BAG_NAME="Ralf_7m"
-RECORD=true
+RECORD=false
 
 /usr/bin/gnome-terminal --tab -- bash -c "rviz2 -d /home/samuelg9/ros2_ws_host/rviz/genz_wheel_ekf_fusion_benchmark.rviz; exec bash" &
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag play /home/samuelg9/ros2_ws_host/recordings/bp/${BAG_NAME} --topics /scan_merged /amrapi/sensor/velocity /hw_layer/imu/sensor/data; exec bash" &
@@ -15,7 +15,7 @@ RECORD=true
 
 if [ "$RECORD" = true ]; then
   rm -rf /home/samuelg9/ros2_ws_host/recordings/output/genz_ekf_${BAG_NAME}
-  /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag record -o /home/samuelg9/ros2_ws_host/recordings/output/genz_ekf_${BAG_NAME} /genz/local_map /genz/non_planar_points /genz/odometry /genz/planar_points /genz/trajectory /ground_truth /ground_truth_path /ground_truth_wrapper /imu /odometry/filtered /odometry/path /pointcloud_topic /scan_merged /scan_merged_c /tf /tf_static /wheel_odom /wheel_odom_path; exec bash" &
+  /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag record -o /home/samuelg9/ros2_ws_host/recordings/output/genz_ekf_${BAG_NAME} /genz/local_map /genz/non_planar_points /genz/odometry /genz/planar_points /ground_truth_wrapper /imu /odometry/filtered /scan_merged_c /tf /tf_static /wheel_odom; exec bash" &
 fi
 
 sleep 4
