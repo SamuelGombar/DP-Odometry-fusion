@@ -55,8 +55,6 @@ private:
         imu_msg.orientation.w = q.w();
 
         // Set orientation covariance (0.01 rad^2 diagonal, -1 means unknown)
-        imu_msg.orientation_covariance[0] = 0.01;
-        imu_msg.orientation_covariance[4] = 0.01;
         imu_msg.orientation_covariance[8] = 0.01;
 
         // Calculate angular velocity from angle differentiation
@@ -80,9 +78,7 @@ private:
         imu_msg.angular_velocity.z = angular_velocity_z;
 
         // Set angular velocity covariance
-        imu_msg.angular_velocity_covariance[0] = 0.01;
-        imu_msg.angular_velocity_covariance[4] = 0.01;
-        imu_msg.angular_velocity_covariance[8] = 0.01;
+        imu_msg.angular_velocity_covariance[8] = 0.0000001;
 
         // Set linear acceleration
         imu_msg.linear_acceleration.x = msg->acceleration_x;
@@ -90,9 +86,8 @@ private:
         imu_msg.linear_acceleration.z = msg->acceleration_z;
 
         // Set linear acceleration covariance
-        imu_msg.linear_acceleration_covariance[0] = 0.01;
-        imu_msg.linear_acceleration_covariance[4] = 0.01;
-        imu_msg.linear_acceleration_covariance[8] = 0.01;
+        imu_msg.linear_acceleration_covariance[0] = 0.0000001;
+        imu_msg.linear_acceleration_covariance[4] = 0.0000001;
 
         // Publish the message
         imu_publisher_->publish(imu_msg);
