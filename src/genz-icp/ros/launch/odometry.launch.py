@@ -43,11 +43,11 @@ def generate_launch_description():
             DeclareLaunchArgument("publish_odom_tf", default_value="false"),
             # GenZ-ICP parameters
             DeclareLaunchArgument("deskew", default_value="false"),
-            DeclareLaunchArgument("max_range", default_value="4.0"),
+            DeclareLaunchArgument("max_range", default_value="7.0"),
             DeclareLaunchArgument("min_range", default_value="0.1"),
             # This thing is still not suported: https://github.com/ros2/launch/issues/290#issuecomment-1438476902
             #  DeclareLaunchArgument("voxel_size", default_value=None),
-            DeclareLaunchArgument("voxel_size", default_value="0.1"),
+            DeclareLaunchArgument("voxel_size", default_value="0.3"),
             DeclareLaunchArgument("map_cleanup_radius", default_value="8.0"),
             DeclareLaunchArgument("desired_num_voxelized_points", default_value="4000"),
             DeclareLaunchArgument("planarity_threshold", default_value="0.2"),
