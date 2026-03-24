@@ -1,4 +1,4 @@
-BAG_NAME="best/genz_ekf_Ralf_7m_compressed"
+BAG_NAME="genz_ekf_Candy_7m"
 
 /usr/bin/gnome-terminal --tab -- bash -c "rviz2 -d /home/samuelg9/ros2_ws_host/rviz/genz_wheel_ekf_fusion_benchmark.rviz; exec bash" &
 
