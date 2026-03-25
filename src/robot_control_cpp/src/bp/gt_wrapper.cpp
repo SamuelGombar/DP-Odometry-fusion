@@ -21,10 +21,10 @@ public:
         double yaw = tf2::getYaw(msg->pose.pose.orientation);
 
         if (first_) {
-          offset_x_   = x; //- 0.21;
+          offset_x_   = x;
           offset_y_   = y;
-          // offset_yaw_ = yaw;
-          offset_yaw_ = 3.135;
+          offset_yaw_ = yaw;
+          // offset_yaw_ = 3.135;
           first_ = false;
         }
 

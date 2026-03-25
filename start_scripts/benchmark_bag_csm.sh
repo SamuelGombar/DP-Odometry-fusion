@@ -1,5 +1,5 @@
-BAG_NAME="Candy_7m"
-RECORD=true
+BAG_NAME="idk"
+RECORD=false
 
 /usr/bin/gnome-terminal --tab -- bash -c "rviz2 -d /home/samuelg9/ros2_ws_host/rviz/csm_fusion_benchmark.rviz; exec bash" &
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag play /home/samuelg9/ros2_ws_host/recordings/bp/${BAG_NAME} --topics /scan_merged /scan_merged_filtered /amrapi/sensor/velocity /hw_layer/imu/sensor/data; exec bash" &

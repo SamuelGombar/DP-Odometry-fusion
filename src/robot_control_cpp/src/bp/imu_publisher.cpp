@@ -5,9 +5,10 @@
 #include "tf2/LinearMath/Quaternion.h"
 #include <cmath>
 
+
 class GyroPublisher : public rclcpp::Node {
 public:
-    GyroPublisher() : Node("gyro_publisher"), prev_angle_x_(0.0), prev_angle_y_(0.0), prev_angle_z_(0.0), prev_timestamp_(0.0) {
+    GyroPublisher() : Node("gyro_publisher"), prev_angle_x_(0.0), prev_angle_y_(0.0), prev_angle_z_(0.0), prev_timestamp_(0.0), first_(true), offset_roll_(0.0), offset_pitch_(0.0), offset_yaw_(0.0) {
         // Create subscription to hw_layer IMU topic
         imu_subscription_ = this->create_subscription<hw_layer_msgs::msg::IMUMsg>(
             "/hw_layer/imu/sensor/data",
@@ -31,6 +32,8 @@ private:
     double prev_angle_y_;
     double prev_angle_z_;
     double prev_timestamp_;
+    bool first_;
+    double offset_roll_, offset_pitch_, offset_yaw_;
 
     void imu_callback(const hw_layer_msgs::msg::IMUMsg::SharedPtr msg) {
         // Create output Imu message
@@ -46,8 +49,20 @@ private:
         double pitch = msg->angle_y;
         double yaw = msg->angle_z;
 
+        if (first_) {
+            offset_roll_ = roll;
+            offset_pitch_ = pitch;
+            offset_yaw_ = yaw;
+            first_ = false;
+        }
+
+        // Subtract offset to zero orientation at startup
+        double adj_roll = roll - offset_roll_;
+        double adj_pitch = pitch - offset_pitch_;
+        double adj_yaw = yaw - offset_yaw_;
+
         tf2::Quaternion q;
-        q.setRPY(roll, pitch, yaw);
+        q.setRPY(adj_roll, adj_pitch, adj_yaw);
 
         imu_msg.orientation.x = q.x();
         imu_msg.orientation.y = q.y();
