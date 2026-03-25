@@ -94,7 +94,7 @@ LaserScanMatcher::LaserScanMatcher() : Node("laser_scan_matcher"), initialized_(
     "Maximum translation between scans (m).");
 
   add_parameter("max_iterations", rclcpp::ParameterValue(10), //10
-    "Maximum ICP cycle iterationsr.");
+    "Maximum ICP cycle iterations.");
 
   add_parameter("epsilon_xy", rclcpp::ParameterValue(0.000001),
    "A threshold for stopping (m).");
@@ -151,7 +151,7 @@ LaserScanMatcher::LaserScanMatcher() : Node("laser_scan_matcher"), initialized_(
   //     with the value of the error at the chosen percentile.
   //  4) Discard correspondences over the threshold.
   //  This is useful to be conservative; yet remove the biggest errors.
-  add_parameter("outliers_adaptive_order", rclcpp::ParameterValue(0.7),
+  add_parameter("outliers_adaptive_order", rclcpp::ParameterValue(0.6),
     "");
   
   add_parameter("outliers_adaptive_mult", rclcpp::ParameterValue(2.0),
@@ -531,20 +531,20 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
     static double corr_threshold = 0.1;
     // std::cout << ratio << std::endl;
     if ((ratio < corr_threshold)) {
-        std::cout << "CORRECTED: "<< ratio << std::endl;
-        if (wheel_pose_diff.getOrigin().length() > 0.01) {
-          auto correction = lidar_pose_diff.inverse() * wheel_pose_diff;
-          // Apply only the translation part, preserve current rotation
-          tf2::Transform translation_only;
-          translation_only.setOrigin(correction.getOrigin());
-          translation_only.setRotation(tf2::Quaternion::getIdentity());
-          fusion_ = fusion_ * translation_only;
-        // std::cout << "CORRECTED: "<< ratio << std::endl;
-        // if (wheel_pose_diff.getOrigin().length() > 0.01) {
-        //   // auto correction = wheel_pose_diff;
-        //   auto correction = lidar_pose_diff.inverse() * wheel_pose_diff;
-        //   fusion_ = fusion_ * correction;
-        }
+      std::cout << "CORRECTED: "<< ratio << std::endl;
+      if (wheel_pose_diff.getOrigin().length() > 0.01) {
+        auto correction = lidar_pose_diff.inverse() * wheel_pose_diff;
+        // Apply only the translation part, preserve current rotation
+        tf2::Transform translation_only;
+        translation_only.setOrigin(correction.getOrigin());
+        translation_only.setRotation(tf2::Quaternion::getIdentity());
+        fusion_ = fusion_ * translation_only;
+      // std::cout << "CORRECTED: "<< ratio << std::endl;
+      // if (wheel_pose_diff.getOrigin().length() > 0.01) {
+      //   // auto correction = wheel_pose_diff;
+      //   auto correction = lidar_pose_diff.inverse() * wheel_pose_diff;
+      //   fusion_ = fusion_ * correction;
+      }
     }
     else if (lidar_sum_poses.getOrigin().getX() * wheel_sum_poses.getOrigin().getX() < 0) {
       // std::cout << "Going backwards: " << lidar_sum_poses.getOrigin().getX() << std::endl;
