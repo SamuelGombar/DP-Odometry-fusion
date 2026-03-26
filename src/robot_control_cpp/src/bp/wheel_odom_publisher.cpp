@@ -105,7 +105,7 @@ private:
     tf.transform.rotation.y = q.y();
     tf.transform.rotation.z = q.z();
     tf.transform.rotation.w = q.w();
-    // tf_broadcaster_->sendTransform(tf);
+    tf_broadcaster_->sendTransform(tf);
   }
 
   void publishInitialOdom()

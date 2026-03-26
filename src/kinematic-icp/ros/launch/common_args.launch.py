@@ -27,7 +27,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "wheel_odom_frame",
-                default_value="odom_wheel",
+                default_value="odom",
                 description="",
             ),
             DeclareLaunchArgument(
