@@ -1,7 +1,7 @@
 /**:
   ros__parameters:
     # Preprocessing
-    max_range: 100.0
+    max_range: 7.0
     min_range: 0.0
     # Mapping parameters
     voxel_size: 1.0
@@ -19,6 +19,8 @@
     fixed_regularization: 0.0 # Ignored if use_adaptive_odometry_regularization=true
 
     # Motion Compensation
+    # Disabled: 2D lidar has no per-point timestamps (time_increment=0 → all-equal
+    # timestamps → 0/0=NaN normalization → undefined behaviour in VoxelHashMap)
     deskew: false
 
     # Covariance diagonal values

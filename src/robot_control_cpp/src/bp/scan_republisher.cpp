@@ -30,9 +30,11 @@ public:
     sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
       "/scan_merged", 10,
       [this](const sensor_msgs::msg::LaserScan::SharedPtr msg) {
+        // Use the original bag timestamp so TF lookups in kinematic_icp are consistent
+        auto stamp = msg->header.stamp;
         // Publish identity transforms for map->odom and odom->base_link
-        auto stamp = this->now();  // Use current time, not the old message timestamp
-
+        // auto stamp = this->now();
+        
         geometry_msgs::msg::TransformStamped map_to_odom;
         map_to_odom.header.stamp = stamp;
         map_to_odom.header.frame_id = "map";
@@ -41,10 +43,10 @@ public:
 
         tf_broadcaster_->sendTransform(map_to_odom);
 
-        // Republish scan with frame_id = "base_laser"
+        // Republish scan with frame_id = "base_laser", preserving original timestamp
         auto out = *msg;
         out.header.frame_id = "base_laser";
-        out.header.stamp = stamp;  // Update timestamp to current
+        out.header.stamp = stamp;
         pub_->publish(out);
       });
   }

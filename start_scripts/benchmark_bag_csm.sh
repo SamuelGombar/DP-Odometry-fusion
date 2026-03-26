@@ -14,7 +14,7 @@ RECORD=false
 
 if [ "$RECORD" = true ]; then
   rm -rf /home/samuelg9/ros2_ws_host/recordings/output/csm/csm_${BAG_NAME}
-  /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag record -o /home/samuelg9/ros2_ws_host/recordings/output/csm/csm_${BAG_NAME} /ground_truth_wrapper /imu /fusion_odometry /scan_merged_c /tf /tf_static /wheel_odom; exec bash" &
+  /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag record -o /home/samuelg9/ros2_ws_host/recordings/output/csm/csm_${BAG_NAME} /ground_truth_wrapper /imu /fusion_odometry /scan_merged_c /odom_icp /tf /tf_static /wheel_odom; exec bash" &
 fi
 
 sleep 4
