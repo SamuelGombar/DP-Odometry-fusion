@@ -63,11 +63,11 @@ private:
 
         if (flag) {
             checkpoints.push_back({0, 3.5});
-            checkpoints.push_back({2.7, 3.5});
-            checkpoints.push_back({2.7, 1.5});
-            checkpoints.push_back({0.8, 1.5});
-            checkpoints.push_back({0, 3.5});
-            checkpoints.push_back({0, 0});
+            checkpoints.push_back({2.9, 3.5});
+            checkpoints.push_back({2.9, 1.5});
+            // checkpoints.push_back({0.8, 1.5});
+            // checkpoints.push_back({0, 3.5});
+            // checkpoints.push_back({0, 0});
             flag = false;
         }
 		
