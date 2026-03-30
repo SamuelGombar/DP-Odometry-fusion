@@ -1,4 +1,4 @@
-BAG_NAME="backup/genz_ekf_Ralf_4m_compressed"
+BAG_NAME="backup/best/genz_ekf_Ralf_7m_compressed"
 
 # ODOMETRY="csm/"
 ODOMETRY="genz_ekf/"

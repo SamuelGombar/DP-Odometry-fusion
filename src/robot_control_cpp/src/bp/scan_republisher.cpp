@@ -28,12 +28,12 @@ public:
     static_tf_broadcaster_->sendTransform(static_tf);
 
     sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
-      "/scan_merged", 10,
+      "/scan_merged_filtered", 10,
       [this](const sensor_msgs::msg::LaserScan::SharedPtr msg) {
         // Use the original bag timestamp so TF lookups in kinematic_icp are consistent
-        auto stamp = msg->header.stamp;
+        // auto stamp = msg->header.stamp;
         // Publish identity transforms for map->odom and odom->base_link
-        // auto stamp = this->now();
+        auto stamp = this->now();
         
         geometry_msgs::msg::TransformStamped map_to_odom;
         map_to_odom.header.stamp = stamp;

@@ -94,8 +94,8 @@ class TLaserMeasurement:
 
 
 # Define the IP address and port number
-UDP_IP = "127.0.0.1"  # Loopback address for local testing
-# UDP_IP = "192.168.1.13"
+# UDP_IP = "127.0.0.1"  # Loopback address for local testing
+UDP_IP = "192.168.1.12"
 ROBOT_UDP_PORT_UP = 5300
 ROBOT_UDP_PORT_DOWN = 53000
 LIDAR_UDP_PORT_UP = 5299

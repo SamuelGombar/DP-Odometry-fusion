@@ -138,8 +138,13 @@ def parse_kobuki_message(data):
             checked_value += 1
             # GyroAngle is signed 16-bit in 1/100 degrees
             output.GyroAngle = int.from_bytes(data[checked_value:checked_value+2], byteorder='little', signed=True)
-            # Normalize to radius: values are in 1/100 degrees.
+            # Normalize to radians: values are in 1/100 degrees.
             output.GyroAngle = (output.GyroAngle / 100.0) * (math.pi / 180.0)
+            checked_value += 2
+            # GyroAngleRate is signed 16-bit in 1/100 deg/s (Z-axis angular velocity, factory calibrated)
+            output.GyroAngleRate = int.from_bytes(data[checked_value:checked_value+2], byteorder='little', signed=True)
+            output.GyroAngleRate = (output.GyroAngleRate / 100.0) * (math.pi / 180.0)
+            checked_value += 5  # 2 for angle rate + 3 unused bytes
 
 
         else:
@@ -171,6 +176,7 @@ def main():
             kobuki_data = parse_kobuki_message(response)
             print(kobuki_data.EncoderLeft)
             print(kobuki_data.EncoderRight)
+            print(f'GyroAngleRate: {kobuki_data.GyroAngleRate}')
             print('-------')
             sleep(0.01)
 
