@@ -20,6 +20,9 @@ import math
 
 from .defines import *
 
+_last_gyro_angle = 0.0
+_last_gyro_time = None
+
 '''
 Communication protocol: https://kobuki.readthedocs.io/en/devel/protocol.html
 '''
@@ -120,8 +123,8 @@ def parse_kobuki_message(data):
             checked_value += 1
         elif data[checked_value] == 0x03:
             checked_value += 1
-            if data[checked_value] != 0x03:
-                return -3
+            # if data[checked_value] != 0x03:
+                # return -3
             checked_value += 1
             output.IRSensorRight = data[checked_value]
             checked_value += 1
@@ -133,18 +136,23 @@ def parse_kobuki_message(data):
         # omitted for brevity
         elif data[checked_value] == 0x04:
             checked_value += 1
-            if data[checked_value] != 0x07:
-                return -3
+            # if data[checked_value] != 0x07:
+            #     return -3
             checked_value += 1
             # GyroAngle is signed 16-bit in 1/100 degrees
             output.GyroAngle = int.from_bytes(data[checked_value:checked_value+2], byteorder='little', signed=True)
             # Normalize to radians: values are in 1/100 degrees.
             output.GyroAngle = (output.GyroAngle / 100.0) * (math.pi / 180.0)
             checked_value += 2
-            # GyroAngleRate is signed 16-bit in 1/100 deg/s (Z-axis angular velocity, factory calibrated)
-            output.GyroAngleRate = int.from_bytes(data[checked_value:checked_value+2], byteorder='little', signed=True)
-            output.GyroAngleRate = (output.GyroAngleRate / 100.0) * (math.pi / 180.0)
+            # GyroAngleRate: compute from angle difference / time delta since sensor rate is always zero
+            global _last_gyro_angle, _last_gyro_time
+            now = time()
+            if _last_gyro_time is not None and (now - _last_gyro_time) > 0:
+                output.GyroAngleRate = (output.GyroAngle - _last_gyro_angle) / (now - _last_gyro_time)
+            _last_gyro_angle = output.GyroAngle
+            _last_gyro_time = now
             checked_value += 5  # 2 for angle rate + 3 unused bytes
+            print(output.GyroAngleRate)
 
 
         else:
@@ -176,7 +184,6 @@ def main():
             kobuki_data = parse_kobuki_message(response)
             print(kobuki_data.EncoderLeft)
             print(kobuki_data.EncoderRight)
-            print(f'GyroAngleRate: {kobuki_data.GyroAngleRate}')
             print('-------')
             sleep(0.01)
 

@@ -23,7 +23,7 @@ from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, TransformStamped
-from sensor_msgs.msg import LaserScan
+from sensor_msgs.msg import LaserScan, Imu
 from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
 
@@ -81,6 +81,7 @@ class Kobuki(Node):
     def setup_publishers(self):
         self.odom_pub = self.create_publisher(Odometry, 'odom', 10)
         self.laser_scan_pub = self.create_publisher(LaserScan, 'scan', 10)
+        self.imu_pub = self.create_publisher(Imu, 'imu', 10)
         self.tf_broadcaster = TransformBroadcaster(self)        # toto si mal vymazane
         self.tf_static_broadcaster = StaticTransformBroadcaster(self)
 
@@ -136,6 +137,7 @@ class Kobuki(Node):
 
             if self.robot_data:
                 self.publish_odometry(now)
+                self.publish_imu(now)
             
             if self.lidar_data:
                 self.publish_laser_scan(now)
@@ -212,10 +214,16 @@ class Kobuki(Node):
         msg.twist.twist.angular.z = pose_update_rates[2]
 
         # Covariance
-        msg.twist.covariance[0] = 1e-9    #co mas screennute
-        msg.twist.covariance[7] = 1e-9
-        msg.twist.covariance[35] = 1e-9
+        msg.twist.covariance[0] = 0.000000001   # vx
+        msg.twist.covariance[7] = 0.000000001   # vy
+        msg.twist.covariance[35] = 0.000000001  # vyaw
 
+        # na rosbag
+        # msg.twist.covariance[0] = 1e-9    #co mas screennute
+        # msg.twist.covariance[7] = 1e-9
+        # msg.twist.covariance[35] = 1e-9
+
+        # self.get_logger().info(f'GyroAngleRate: {self.robot_data.GyroAngleRate}')
         self.odom_pub.publish(msg)
         # self.odom_to_base_link_tf(msg)
 
@@ -238,6 +246,38 @@ class Kobuki(Node):
         msg.range_max = 5.0
         
         self.laser_scan_pub.publish(msg)
+
+    def publish_imu(self, stamp: Time):
+        msg = Imu()
+        msg.header.stamp = stamp.to_msg()
+        msg.header.frame_id = 'base_link'
+
+        # Orientation from integrated gyro angle (yaw only)
+        quat = yaw_to_quaternion(self.robot_data.GyroAngle)
+        msg.orientation.x = 0.0
+        msg.orientation.y = 0.0
+        msg.orientation.z = quat[2]
+        msg.orientation.w = quat[3]
+        # Only yaw is known; set x/y orientation covariance to high uncertainty
+        msg.orientation_covariance[0] = 1e6
+        msg.orientation_covariance[4] = 1e6
+        msg.orientation_covariance[8] = 0.1
+
+        # Angular velocity from gyro (z-axis only)
+        msg.angular_velocity.x = 0.0
+        msg.angular_velocity.y = 0.0
+        msg.angular_velocity.z = self.robot_data.GyroAngleRate
+        msg.angular_velocity_covariance[0] = 1e6
+        msg.angular_velocity_covariance[4] = 1e6
+        msg.angular_velocity_covariance[8] = 0.05
+
+        # Linear acceleration not available
+        msg.linear_acceleration.x = 0.0
+        msg.linear_acceleration.y = 0.0
+        msg.linear_acceleration.z = 0.0
+        msg.linear_acceleration_covariance[0] = -1.0  # signal: not available
+
+        self.imu_pub.publish(msg)
 
     def publish_z_gyro(self, stamp: Time):
         pass

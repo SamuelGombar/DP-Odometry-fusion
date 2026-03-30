@@ -100,7 +100,7 @@ private:
 
     // Set twist covariances
     odom.twist.covariance[0] = 0.0000000001;  // variance of linear x
-    odom.twist.covariance[1] = 0.0000000001;  // variance of linear y
+    odom.twist.covariance[7] = 0.0000000001;  // variance of linear y
     odom.twist.covariance[35] = 0.0000000001; // variance of angular z (yaw)
 
     odom_pub_->publish(odom);

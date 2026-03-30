@@ -62,6 +62,7 @@ class TKobukiData:
         self.IRSensorLeft = 0  # unsigned char
         self.GyroAngle = 0  # signed short
         self.GyroAngleRate = 0  # unsigned short
+        self.LastGyroAngle = 0
         self.CliffSensorRight = 0  # unsigned short
         self.CliffSensorCenter = 0  # unsigned short
         self.CliffSensorLeft = 0  # unsigned short

@@ -43,7 +43,7 @@ def generate_launch_description():
             DeclareLaunchArgument("publish_odom_tf", default_value="false"),
             # GenZ-ICP parameters
             DeclareLaunchArgument("deskew", default_value="false"),
-            DeclareLaunchArgument("max_range", default_value="4.0"),
+            DeclareLaunchArgument("max_range", default_value="7.0"),
             DeclareLaunchArgument("min_range", default_value="0.1"),
             # This thing is still not suported: https://github.com/ros2/launch/issues/290#issuecomment-1438476902
             #  DeclareLaunchArgument("voxel_size", default_value=None),
@@ -56,7 +56,7 @@ def generate_launch_description():
             DeclareLaunchArgument("convergence_criterion", default_value="0.0001"),
             DeclareLaunchArgument("initial_threshold", default_value="2.0"),
             DeclareLaunchArgument("min_motion_th", default_value="0.1"),
-            DeclareLaunchArgument("min_consecutive_observations", default_value="2"),
+            DeclareLaunchArgument("min_consecutive_observations", default_value="4"),
             DeclareLaunchArgument("config_file", default_value=""),
             Node(
                 package="genz_icp",
