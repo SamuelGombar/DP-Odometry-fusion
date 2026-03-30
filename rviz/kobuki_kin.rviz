@@ -6,9 +6,12 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /Wheel1
         - /Wheel1/Topic1
         - /Wheel1/Shape1
         - /Kin Path1
+        - /Odometry1
+        - /Odometry1/Shape1
       Splitter Ratio: 0.5088235139846802
     Tree Height: 707
   - Class: rviz_common/Selection
@@ -102,7 +105,7 @@ Visualization Manager:
           Value: true
         Value: false
       Enabled: false
-      Keep: 100
+      Keep: 1
       Name: Wheel
       Position Tolerance: 0.10000000149011612
       Shape:
@@ -235,6 +238,45 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /kinematic_icp/lidar_odometry_path
       Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz_default_plugins/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: false
+      Enabled: true
+      Keep: 1
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 134; 94; 60
+        Head Length: 0.07999999821186066
+        Head Radius: 0.05000000074505806
+        Shaft Length: 0.09000000357627869
+        Shaft Radius: 0.019999999552965164
+        Value: Arrow
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /kinematic_icp/lidar_odometry
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 61; 56; 70
@@ -281,16 +323,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 6.620738983154297
+      Distance: 9.361178398132324
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.050274133682251
-        Y: 1.9065752029418945
-        Z: 0.06729016453027725
+        X: 0.9620689153671265
+        Y: 0.8386145234107971
+        Z: 0.06088494136929512
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
