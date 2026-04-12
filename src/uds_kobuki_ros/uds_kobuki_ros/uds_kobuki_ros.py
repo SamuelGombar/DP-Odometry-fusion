@@ -71,12 +71,14 @@ class Kobuki(Node):
         self.declare_parameter('robot_upd_port_down', 53000)
         self.declare_parameter('lidar_upd_port_up', 5299)
         self.declare_parameter('lidar_upd_port_down', 52999)
+        self.declare_parameter('is_kinematic', False)
 
         self.ip_address = self.get_parameter('ip_address').get_parameter_value().string_value
         self.robot_upd_port_up = self.get_parameter('robot_upd_port_up').get_parameter_value().integer_value
         self.robot_upd_port_down = self.get_parameter('robot_upd_port_down').get_parameter_value().integer_value
         self.lidar_upd_port_up = self.get_parameter('lidar_upd_port_up').get_parameter_value().integer_value
         self.lidar_upd_port_down = self.get_parameter('lidar_upd_port_down').get_parameter_value().integer_value
+        self.is_kinematic = self.get_parameter('is_kinematic').get_parameter_value().bool_value
 
     def setup_publishers(self):
         self.odom_pub = self.create_publisher(Odometry, 'odom', 10)
@@ -214,9 +216,9 @@ class Kobuki(Node):
         msg.twist.twist.angular.z = pose_update_rates[2]
 
         # Covariance
-        msg.twist.covariance[0] = 0.000000001   # vx
-        msg.twist.covariance[7] = 0.000000001   # vy
-        msg.twist.covariance[35] = 0.000000001  # vyaw
+        msg.twist.covariance[0] = 0.001   # vx
+        msg.twist.covariance[7] = 0.001   # vy
+        msg.twist.covariance[35] = 0.001  # vyaw
 
         # na rosbag
         # msg.twist.covariance[0] = 1e-9    #co mas screennute
@@ -275,7 +277,7 @@ class Kobuki(Node):
         msg.linear_acceleration.x = 0.0
         msg.linear_acceleration.y = 0.0
         msg.linear_acceleration.z = 0.0
-        msg.linear_acceleration_covariance[0] = -1.0  # signal: not available
+        # msg.linear_acceleration_covariance[0] = -1.0  # signal: not available
 
         self.imu_pub.publish(msg)
 
@@ -328,7 +330,8 @@ class Kobuki(Node):
         t.transform.rotation.z = msg.pose.pose.orientation.z
         t.transform.rotation.w = msg.pose.pose.orientation.w
 
-        self.tf_broadcaster.sendTransform(t)
+        if self.is_kinematic:
+            self.tf_broadcaster.sendTransform(t)
 
 def main(args=None):
     rclpy.init(args=args)

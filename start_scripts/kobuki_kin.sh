@@ -2,13 +2,13 @@ BAG_NAME="1"
 RECORD=false
 OUTPUT_PATH="/home/samuelg9/ros2_ws_host/recordings/output/kobuki/"
 
-/usr/bin/gnome-terminal --tab -- bash -c "ros2 run uds_kobuki_ros uds_kobuki_ros; exec bash" &
+/usr/bin/gnome-terminal --tab -- bash -c "ros2 run uds_kobuki_ros uds_kobuki_ros --ros-args -p is_kinematic:=true; exec bash" &
 /usr/bin/gnome-terminal --tab -- bash -c "rviz2 -d /home/samuelg9/ros2_ws_host/rviz/kobuki_kin.rviz; exec bash" &
 
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 launch kinematic_icp online_node.launch.py lidar_topic:=/scan use_2d_lidar:=true use_sim_time:=False; exec bash" &
-ros2 launch kinematic_icp online_node.launch.py lidar_topic:=/scan use_2d_lidar:=true use_sim_time:=true
+ros2 launch kinematic_icp online_node.launch.py lidar_topic:=/scan use_2d_lidar:=true use_sim_time:=false
 
-# /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp imu_publisher; exec bash" &
+/usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp imu_publisher; exec bash" &
 
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/odom -p path_topic:=/odom_path; exec bash" &
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/kinematic_icp/lidar_odometry -p path_topic:=/kinematic_icp/lidar_odometry_path; exec bash" &

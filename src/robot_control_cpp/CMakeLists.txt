@@ -77,7 +77,7 @@ ament_target_dependencies(odom_to_path
   nav_msgs)
 
 # convert hw_layer IMU to standard sensor_msgs/Imu
-add_executable(imu_publisher src/bp/imu_publisher.cpp)
+add_executable(imu_publisher src/imu_publisher.cpp)
 ament_target_dependencies(imu_publisher
   rclcpp
   sensor_msgs

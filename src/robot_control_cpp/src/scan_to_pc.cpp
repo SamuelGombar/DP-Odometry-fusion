@@ -12,9 +12,11 @@ public:
         pointcloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
             "/pointcloud_topic", rclcpp::QoS(10));
 
+        auto input_topic = this->declare_parameter<std::string>("input_topic", "/scan_merged_c");
+
         // Subscriber to LaserScan
         laserscan_sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
-            "/scan_merged_c", rclcpp::QoS(10),
+            input_topic, rclcpp::QoS(10),
             std::bind(&LaserToPointCloudNode::laserCallback, this, std::placeholders::_1));
         
     }
