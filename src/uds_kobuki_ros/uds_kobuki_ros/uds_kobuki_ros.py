@@ -65,8 +65,8 @@ class Kobuki(Node):
         self.lidar_sock.close()
 
     def setup_parameters(self):
-        # self.declare_parameter('ip_address', '127.0.0.1')
-        self.declare_parameter('ip_address', '192.168.1.12')
+        self.declare_parameter('ip_address', '127.0.0.1')
+        # self.declare_parameter('ip_address', '192.168.1.12')
         self.declare_parameter('robot_upd_port_up', 5300)
         self.declare_parameter('robot_upd_port_down', 53000)
         self.declare_parameter('lidar_upd_port_up', 5299)

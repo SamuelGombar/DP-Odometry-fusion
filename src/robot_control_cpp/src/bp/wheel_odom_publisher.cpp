@@ -11,9 +11,12 @@ class WheelOdomPublisher : public rclcpp::Node
 public:
   WheelOdomPublisher()
   : Node("wheel_odom_publisher"),
-    x_(0.0), y_(0.0), theta_(0.0), first_odom_(true), offset_x_(0.0), offset_y_(0.0), offset_theta_(0.0)//,
-    //last_v_(0.0), last_w_(0.0), last_pub_time_(0, 0, RCL_ROS_TIME)
+    x_(0.0), y_(0.0), theta_(0.0), first_odom_(true), offset_x_(0.0), offset_y_(0.0), offset_theta_(0.0),
+    last_v_(0.0), last_w_(0.0), last_pub_time_(0, 0, RCL_ROS_TIME)
   {
+    this->declare_parameter<bool>("is_kinematic", false);
+    is_kinematic_ = this->get_parameter("is_kinematic").as_bool();
+
     odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/wheel_odom", 10);
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
@@ -28,9 +31,11 @@ public:
 
     // Republish last known pose at 20 Hz to keep the TF buffer alive
     // when the velocity topic goes quiet (robot stopped / recording gaps).
-    // keepalive_timer_ = this->create_wall_timer(
-    //   std::chrono::milliseconds(50),
-    //   std::bind(&WheelOdomPublisher::keepaliveCallback, this));
+    if (is_kinematic_) {
+      keepalive_timer_ = this->create_wall_timer(
+        std::chrono::milliseconds(500),
+        std::bind(&WheelOdomPublisher::keepaliveCallback, this));
+    }
 
     RCLCPP_INFO(this->get_logger(), "Wheel odometry publisher started");
   }
@@ -93,10 +98,12 @@ private:
     odom.twist.twist.linear.x = v;
     odom.twist.twist.angular.z = w;
 
-    // last_v_ = v;
-    // last_w_ = w;
-    // last_q_ = q;
-    // last_pub_time_ = current_time;
+    if(is_kinematic_) {
+      last_v_ = v; 
+      last_w_ = w;
+      last_q_ = q;
+      last_pub_time_ = current_time;
+    }
 
     // Set twist covariances
     odom.twist.covariance[0] = 0.0000000001;  // variance of linear x
@@ -117,50 +124,53 @@ private:
     tf.transform.rotation.y = q.y();
     tf.transform.rotation.z = q.z();
     tf.transform.rotation.w = q.w();
-    // tf_broadcaster_->sendTransform(tf);
+
+    if (is_kinematic_) {
+      tf_broadcaster_->sendTransform(tf);
+    }
   }
 
-  // void keepaliveCallback()
-  // {
-  //   auto now = this->now();
-  //   if (now.nanoseconds() == 0) return;  // sim clock not yet running
-  //   // Only republish if the velocity callback hasn't already published recently
-  //   if ((now - last_pub_time_).seconds() < 0.04) return;
+  void keepaliveCallback()
+  {
+    auto now = this->now();
+    if (now.nanoseconds() == 0) return;  // sim clock not yet running
+    // Only republish if the velocity callback hasn't already published recently
+    if ((now - last_pub_time_).seconds() < 0.04) return;
 
-  //   // Re-stamp and republish last known pose so TF buffer stays fresh
-  //   geometry_msgs::msg::TransformStamped tf;
-  //   tf.header.stamp = now;
-  //   tf.header.frame_id = "odom";
-  //   tf.child_frame_id = "base_link";
-  //   tf.transform.translation.x = x_;
-  //   tf.transform.translation.y = y_;
-  //   tf.transform.translation.z = 0.0;
-  //   tf.transform.rotation.x = last_q_.x();
-  //   tf.transform.rotation.y = last_q_.y();
-  //   tf.transform.rotation.z = last_q_.z();
-  //   tf.transform.rotation.w = last_q_.w();
-  //   // tf_broadcaster_->sendTransform(tf);
+    // Re-stamp and republish last known pose so TF buffer stays fresh
+    geometry_msgs::msg::TransformStamped tf;
+    tf.header.stamp = now;
+    tf.header.frame_id = "odom";
+    tf.child_frame_id = "base_link";
+    tf.transform.translation.x = x_;
+    tf.transform.translation.y = y_;
+    tf.transform.translation.z = 0.0;
+    tf.transform.rotation.x = last_q_.x();
+    tf.transform.rotation.y = last_q_.y();
+    tf.transform.rotation.z = last_q_.z();
+    tf.transform.rotation.w = last_q_.w();
+    tf_broadcaster_->sendTransform(tf);
 
-  //   auto odom = nav_msgs::msg::Odometry();
-  //   odom.header.stamp = now;
-  //   odom.header.frame_id = "odom";
-  //   odom.child_frame_id = "base_link";
-  //   double corrected_x = x_ - offset_x_;
-  //   double corrected_y = y_ - offset_y_;
-  //   double corrected_theta = theta_ - offset_theta_;
-  //   corrected_theta = std::atan2(std::sin(corrected_theta), std::cos(corrected_theta));
-  //   odom.pose.pose.position.x = corrected_x;
-  //   odom.pose.pose.position.y = corrected_y;
-  //   odom.pose.pose.orientation.x = last_q_.x();
-  //   odom.pose.pose.orientation.y = last_q_.y();
-  //   odom.pose.pose.orientation.z = last_q_.z();
-  //   odom.pose.pose.orientation.w = last_q_.w();
-  //   odom.twist.twist.linear.x = 0.0;
-  //   odom.twist.twist.angular.z = 0.0;
-  //   odom_pub_->publish(odom);
+    auto odom = nav_msgs::msg::Odometry();
+    odom.header.stamp = now;
+    odom.header.frame_id = "odom";
+    odom.child_frame_id = "base_link";
+    double corrected_x = x_ - offset_x_;
+    double corrected_y = y_ - offset_y_;
+    double corrected_theta = theta_ - offset_theta_;
+    corrected_theta = std::atan2(std::sin(corrected_theta), std::cos(corrected_theta));
+    odom.pose.pose.position.x = corrected_x;
+    odom.pose.pose.position.y = corrected_y;
+    odom.pose.pose.orientation.x = last_q_.x();
+    odom.pose.pose.orientation.y = last_q_.y();
+    odom.pose.pose.orientation.z = last_q_.z();
+    odom.pose.pose.orientation.w = last_q_.w();
+    odom.twist.twist.linear.x = 0.0;
+    odom.twist.twist.angular.z = 0.0;
+    odom_pub_->publish(odom);
 
-  //   last_pub_time_ = now;
-  // }
+    last_pub_time_ = now;
+  }
 
   void publishInitialOdom()
   {
@@ -194,14 +204,15 @@ private:
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::Subscription<amrapi_msgs::msg::VehicleVelocityMsg>::SharedPtr vel_sub_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
-  // rclcpp::TimerBase::SharedPtr keepalive_timer_;
+  rclcpp::TimerBase::SharedPtr keepalive_timer_;
   rclcpp::Time last_time_;
-  // rclcpp::Time last_pub_time_;
+  rclcpp::Time last_pub_time_;
   double x_, y_, theta_;
   bool first_odom_;
   double offset_x_, offset_y_, offset_theta_;
-  // double last_v_, last_w_;
-  // tf2::Quaternion last_q_ = tf2::Quaternion(0, 0, 0, 1);
+  double last_v_, last_w_;
+  tf2::Quaternion last_q_ = tf2::Quaternion(0, 0, 0, 1);
+  bool is_kinematic_;
 };
 
 int main(int argc, char *argv[])

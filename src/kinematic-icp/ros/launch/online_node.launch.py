@@ -13,7 +13,7 @@ from launch_ros.substitutions.find_package import get_package_share_directory
 
 def generate_launch_description():
     use_sim_time = LaunchConfiguration(
-        "use_sim_time", default=False
+        "use_sim_time", default=True
     )
     tf_timeout = LaunchConfiguration(
         "tf_timeout",

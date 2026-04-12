@@ -1,11 +1,11 @@
-BAG_NAME="Frodo_7m"
-RECORD=true
+BAG_NAME="Ralf_7m"
+RECORD=false
 
 /usr/bin/gnome-terminal --tab -- bash -c "rviz2 -d /home/samuelg9/ros2_ws_host/rviz/kinematic_icp.rviz; exec bash" &
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag play /home/samuelg9/ros2_ws_host/recordings/bp/${BAG_NAME} --clock --topics /scan_merged /scan_merged_filtered /amrapi/sensor/velocity /hw_layer/imu/sensor/data; pkill -SIGINT -f 'ros2 bag record'; exec bash" &
 
-/usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp wheel_odom_publisher --ros-args -p use_sim_time:=true; exec bash" &
-/usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp scan_republisher --ros-args -p use_sim_time:=true; exec bash" &
+/usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp wheel_odom_publisher --ros-args -p use_sim_time:=true -p is_kinematic:=true; exec bash" &
+/usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp scan_republisher --ros-args -p use_sim_time:=true -p is_kinematic:=true; exec bash" &
 
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 launch kinematic_icp online_node.launch.py lidar_topic:=/scan_merged_c use_2d_lidar:=true; exec bash" &
 
