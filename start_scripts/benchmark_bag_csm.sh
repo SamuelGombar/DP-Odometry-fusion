@@ -1,4 +1,4 @@
-BAG_NAME="idk"
+BAG_NAME="Candy_4m"
 RECORD=false
 
 /usr/bin/gnome-terminal --tab -- bash -c "rviz2 -d /home/samuelg9/ros2_ws_host/rviz/csm_fusion_benchmark.rviz; exec bash" &

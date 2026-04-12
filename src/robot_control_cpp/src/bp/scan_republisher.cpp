@@ -32,20 +32,17 @@ public:
     sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
       "/scan_merged", 10,
       [this](const sensor_msgs::msg::LaserScan::SharedPtr msg) {
-        // Use the original bag timestamp so TF lookups in kinematic_icp are consistent
-        // Publish identity transforms for map->odom and odom->base_link
         // rclcpp::Time stamp = is_kinematic ? rclcpp::Time(msg->header.stamp) : this->now();
         rclcpp::Time stamp = this->now();
 
         geometry_msgs::msg::TransformStamped map_to_odom;
-        map_to_odom.header.stamp = stamp;  // always wall time so TF2 never sees it as stale
+        map_to_odom.header.stamp = stamp;
         map_to_odom.header.frame_id = "map";
         map_to_odom.child_frame_id = "odom";
         map_to_odom.transform.rotation.w = 1.0;
 
         tf_broadcaster_->sendTransform(map_to_odom);
 
-        // Republish scan with frame_id = "base_laser", preserving original timestamp
         auto out = *msg;
         out.header.frame_id = "base_laser";
         out.header.stamp = stamp;

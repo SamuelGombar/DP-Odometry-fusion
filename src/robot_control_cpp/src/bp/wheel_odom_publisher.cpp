@@ -26,11 +26,8 @@ public:
 
     last_time_ = this->now();
 
-    // Publish initial odometry at 0,0
     publishInitialOdom();
 
-    // Republish last known pose at 20 Hz to keep the TF buffer alive
-    // when the velocity topic goes quiet (robot stopped / recording gaps).
     if (is_kinematic_) {
       keepalive_timer_ = this->create_wall_timer(
         std::chrono::milliseconds(500),
@@ -48,23 +45,20 @@ private:
     last_time_ = current_time;
 
     if (dt <= 0.0 || dt > 1.0) {
-      return;  // skip invalid or too-large time steps
+      return;
     }
 
     double v = msg->linear;
     double w = -msg->angular;
 
-    // Integrate pose using midpoint method
     double delta_theta = w * dt;
     double mid_theta = theta_ + delta_theta / 2.0;
     x_ += v * std::cos(mid_theta) * dt;
     y_ += v * std::sin(mid_theta) * dt;
     theta_ += delta_theta;
 
-    // Normalize theta to [-pi, pi]
     theta_ = std::atan2(std::sin(theta_), std::cos(theta_));
 
-    // Handle first odometry message
     if (first_odom_) {
       offset_x_ = x_;
       offset_y_ = y_;
@@ -72,7 +66,6 @@ private:
       first_odom_ = false;
     }
 
-    // Publish odometry message with offset correction
     auto odom = nav_msgs::msg::Odometry();
     odom.header.stamp = current_time;
     odom.header.frame_id = "odom";
@@ -83,7 +76,6 @@ private:
     double corrected_theta = theta_ - offset_theta_;
     corrected_theta = std::atan2(std::sin(corrected_theta), std::cos(corrected_theta));
 
-    // Create quaternion from corrected yaw
     tf2::Quaternion q;
     q.setRPY(0.0, 0.0, corrected_theta);
 
@@ -105,7 +97,6 @@ private:
       last_pub_time_ = current_time;
     }
 
-    // Set twist covariances
     odom.twist.covariance[0] = 0.0000000001;  // variance of linear x
     odom.twist.covariance[7] = 0.0000000001;  // variance of linear y
     odom.twist.covariance[35] = 0.0000000001; // variance of angular z (yaw)
@@ -133,8 +124,7 @@ private:
   void keepaliveCallback()
   {
     auto now = this->now();
-    if (now.nanoseconds() == 0) return;  // sim clock not yet running
-    // Only republish if the velocity callback hasn't already published recently
+    if (now.nanoseconds() == 0) return;
     if ((now - last_pub_time_).seconds() < 0.04) return;
 
     // Re-stamp and republish last known pose so TF buffer stays fresh
@@ -195,7 +185,7 @@ private:
     // odom.pose.covariance[7] = 0.000001;  // var y
     // odom.pose.covariance[35] = 0.000001; // var yaw
     odom.twist.covariance[0] = 0.000001;  // var linear x
-    odom.twist.covariance[1] = 0.000001;  // var linear y
+    odom.twist.covariance[7] = 0.000001;  // var linear y
     odom.twist.covariance[35] = 0.000001; // var angular z
 
     odom_pub_->publish(odom);

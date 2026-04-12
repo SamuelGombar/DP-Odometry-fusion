@@ -5,7 +5,8 @@ OUTPUT_PATH="/home/samuelg9/ros2_ws_host/recordings/output/kobuki/"
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 run uds_kobuki_ros uds_kobuki_ros; exec bash" &
 /usr/bin/gnome-terminal --tab -- bash -c "rviz2 -d /home/samuelg9/ros2_ws_host/rviz/kobuki_kin.rviz; exec bash" &
 
-/usr/bin/gnome-terminal --tab -- bash -c "ros2 launch kinematic_icp online_node.launch.py lidar_topic:=/scan use_2d_lidar:=true; exec bash" &
+/usr/bin/gnome-terminal --tab -- bash -c "ros2 launch kinematic_icp online_node.launch.py lidar_topic:=/scan use_2d_lidar:=true use_sim_time:=False; exec bash" &
+ros2 launch kinematic_icp online_node.launch.py lidar_topic:=/scan use_2d_lidar:=true use_sim_time:=true
 
 # /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp imu_publisher; exec bash" &
 
