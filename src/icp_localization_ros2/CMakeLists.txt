@@ -12,6 +12,7 @@ add_compile_options(-O3)
 # find dependencies
 find_package(ament_cmake_auto REQUIRED)
 find_package(ament_index_cpp REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 ament_auto_find_build_dependencies()
 ament_auto_add_executable(icp_localization 

@@ -101,7 +101,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: false
-      Enabled: true
+      Enabled: false
       Keep: 1
       Name: Wheel Odom
       Position Tolerance: 0.10000000149011612
@@ -122,7 +122,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /odom
-      Value: true
+      Value: false
     - Angle Tolerance: 0.10000000149011612
       Class: rviz_default_plugins/Odometry
       Covariance:
@@ -140,7 +140,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Keep: 1
       Name: ICP Odom
       Position Tolerance: 0.10000000149011612
@@ -161,7 +161,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /odom_icp
-      Value: true
+      Value: false
     - Angle Tolerance: 0.10000000149011612
       Class: rviz_default_plugins/Odometry
       Covariance:
@@ -179,7 +179,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Keep: 1
       Name: Fusion Odom
       Position Tolerance: 0.10000000149011612
@@ -200,7 +200,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /fusion_odometry
-      Value: true
+      Value: false
     - Alpha: 1
       Buffer Length: 1
       Class: rviz_default_plugins/Path
@@ -260,7 +260,7 @@ Visualization Manager:
     - Alpha: 1
       Buffer Length: 1
       Class: rviz_default_plugins/Path
-      Color: 255; 190; 111
+      Color: 255; 163; 72
       Enabled: true
       Head Diameter: 0.30000001192092896
       Head Length: 0.20000000298023224
@@ -287,7 +287,7 @@ Visualization Manager:
       Value: true
   Enabled: true
   Global Options:
-    Background Color: 36; 31; 49
+    Background Color: 192; 191; 188
     Fixed Frame: map
     Frame Rate: 30
   Name: root
@@ -331,16 +331,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 7.361295700073242
+      Distance: 6.477940082550049
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.6751478910446167
-        Y: 1.1456849575042725
-        Z: -0.0600285567343235
+        X: 1.5099265575408936
+        Y: 1.624048113822937
+        Z: -0.05954809859395027
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
@@ -349,7 +349,7 @@ Visualization Manager:
       Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.7104105949401855
+      Yaw: 4.705410480499268
     Saved: ~
 Window Geometry:
   Displays:

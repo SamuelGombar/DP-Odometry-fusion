@@ -38,7 +38,7 @@ public:
 private:
 	void on_timer()
 	{
-        static double Kp_r = 0.8;
+        static double Kp_r = 1.0;
         static double Kp_t = 0.001;
         static double Ki_t = 0.0001;
         static double integral_pos = 0;
@@ -56,7 +56,7 @@ private:
         static bool is_moving = false;
         static bool is_rotating = true;
         static bool combined_regulator = true;
-        static double TOLER = 0.3;
+        static double TOLER = 0.1;
         static bool finish = false;
         static Point last_checkpoint;
         static double datacounter = 0.0;
@@ -64,10 +64,10 @@ private:
         if (flag) {
             checkpoints.push_back({0, 3.5});
             checkpoints.push_back({2.9, 3.5});
-            checkpoints.push_back({0, 3.5});
+            checkpoints.push_back({2.9, 1.75});
             // checkpoints.push_back({0.8, 1.5});
             // checkpoints.push_back({0, 3.5});
-            checkpoints.push_back({0, 0});
+            // checkpoints.push_back({0, 0});
             flag = false;
         }
 		
@@ -121,7 +121,7 @@ private:
             else if (output_r < -max_r) output_r = -max_r;
 
             //ak error > M_PI/4, tak zastane a zacne sa tocit na mieste
-            if (abs(error_r) > M_PI/8) {
+            if (abs(error_r) > M_PI/10) {
                 output_t = output_t - incr_t;
                 if (output_t <= 0) output_t = 0;
             }

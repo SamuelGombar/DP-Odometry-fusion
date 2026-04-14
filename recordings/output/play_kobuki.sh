@@ -1,4 +1,4 @@
-BAG_NAME="kobuki/csm_ncr_1"
+BAG_NAME="kobuki/csm_ncr_2"
 
 ODOM_TOPIC="fusion_odometry"
 ODOM_PATH_TOPIC="fusion_odometry_path"

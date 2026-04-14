@@ -56,7 +56,7 @@ def generate_launch_description():
             DeclareLaunchArgument("convergence_criterion", default_value="0.0001"),
             DeclareLaunchArgument("initial_threshold", default_value="2.0"),
             DeclareLaunchArgument("min_motion_th", default_value="0.1"),
-            DeclareLaunchArgument("min_consecutive_observations", default_value="4"),
+            DeclareLaunchArgument("min_consecutive_observations", default_value="1000"),
             DeclareLaunchArgument("config_file", default_value=""),
             Node(
                 package="genz_icp",

@@ -1,6 +1,6 @@
-BAG_NAME="Candy_4m"
-RECORD=false
-OUTPUT_PATH="/home/samuelg9/ros2_ws_host/recordings/output/genz_ekf/filtered_data"
+BAG_NAME="Frodo_4m"
+RECORD=true
+OUTPUT_PATH="/home/samuelg9/ros2_ws_host/recordings/output/genz_ekf/cons_scans"
 
 /usr/bin/gnome-terminal --tab -- bash -c "rviz2 -d /home/samuelg9/ros2_ws_host/rviz/genz_wheel_ekf_fusion_benchmark.rviz; exec bash" &
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag play /home/samuelg9/ros2_ws_host/recordings/bp/${BAG_NAME} --topics /scan_merged /scan_merged_filtered /amrapi/sensor/velocity /hw_layer/imu/sensor/data; pkill -SIGINT -f 'ros2 bag record'; exec bash" &
@@ -19,7 +19,7 @@ OUTPUT_PATH="/home/samuelg9/ros2_ws_host/recordings/output/genz_ekf/filtered_dat
 
 if [ "$RECORD" = true ]; then
   # rm -rf ${OUTPUT_PATH}/genz_ekf_${BAG_NAME}
-  /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag record -o ${OUTPUT_PATH}/genz_ekf_${BAG_NAME} /genz/local_map /genz/non_planar_points /genz/odometry /genz/planar_points /ground_truth_wrapper /imu /odometry/filtered /scan_merged_c /tf /tf_static /wheel_odom; exec bash" &
+  /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag record -o ${OUTPUT_PATH}/genz_ekf_${BAG_NAME}_4 /genz/local_map /genz/non_planar_points /genz/odometry /genz/planar_points /ground_truth_wrapper /imu /odometry/filtered /scan_merged_c /tf /tf_static /wheel_odom; exec bash" &
 fi
 
 sleep 4

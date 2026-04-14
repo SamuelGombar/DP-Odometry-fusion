@@ -10,6 +10,7 @@ Panels:
         - /Wheel Odom1/Shape1
         - /ICP Odom1/Shape1
         - /Fusion Odom1/Shape1
+        - /Fusion Path1
       Splitter Ratio: 0.5088235139846802
     Tree Height: 707
   - Class: rviz_common/Selection
@@ -289,7 +290,7 @@ Visualization Manager:
     - Alpha: 1
       Buffer Length: 1
       Class: rviz_default_plugins/Path
-      Color: 255; 190; 111
+      Color: 255; 163; 72
       Enabled: true
       Head Diameter: 0.30000001192092896
       Head Length: 0.20000000298023224
@@ -360,16 +361,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 16.649812698364258
+      Distance: 8.786637306213379
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 2.41017484664917
-        Y: 3.2730259895324707
-        Z: -0.07914863526821136
+        X: -4.64216423034668
+        Y: 1.6943793296813965
+        Z: -0.0700833722949028
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

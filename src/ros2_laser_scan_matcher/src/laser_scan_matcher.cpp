@@ -553,14 +553,14 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
       }
     }
     else if (lidar_sum_poses.getOrigin().getX() * wheel_sum_poses.getOrigin().getX() < 0) {
-      std::cout << "Going backwards: " << lidar_sum_poses.getOrigin().getX() << std::endl;
-      // auto diff = lidar_pose_diff.inverse() * wheel_pose_diff;
-      tf2::Transform correction;
-      // correction.setOrigin(diff.getOrigin());
-      tf2::Vector3 origin = lidar_pose_diff.getOrigin();
-      correction.setOrigin(tf2::Vector3(-origin.x(), 0, 0));
-      correction.setRotation(tf2::Quaternion::getIdentity());
-      fusion_ = fusion_ * correction;
+      // std::cout << "Going backwards: " << lidar_sum_poses.getOrigin().getX() << std::endl;
+      // // auto diff = lidar_pose_diff.inverse() * wheel_pose_diff;
+      // tf2::Transform correction;
+      // // correction.setOrigin(diff.getOrigin());
+      // tf2::Vector3 origin = lidar_pose_diff.getOrigin();
+      // correction.setOrigin(tf2::Vector3(-origin.x(), 0, 0));
+      // correction.setRotation(tf2::Quaternion::getIdentity());
+      // fusion_ = fusion_ * correction;
     }
 
     // Override rotation with absolute IMU yaw
