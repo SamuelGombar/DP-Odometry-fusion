@@ -1,6 +1,7 @@
-BAG_NAME="Frodo_4m"
+BAG_NAME="Candy_4m"
 RECORD=true
-OUTPUT_PATH="/home/samuelg9/ros2_ws_host/recordings/output/genz_ekf/cons_scans"
+SUBFOLDER=genz_ekf
+OUTPUT_PATH="/home/samuelg9/ros2_ws_host/recordings/output/${SUBFOLDER}/${BAG_NAME}_4_0075"
 
 /usr/bin/gnome-terminal --tab -- bash -c "rviz2 -d /home/samuelg9/ros2_ws_host/rviz/genz_wheel_ekf_fusion_benchmark.rviz; exec bash" &
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag play /home/samuelg9/ros2_ws_host/recordings/bp/${BAG_NAME} --topics /scan_merged /scan_merged_filtered /amrapi/sensor/velocity /hw_layer/imu/sensor/data; pkill -SIGINT -f 'ros2 bag record'; exec bash" &
@@ -8,7 +9,7 @@ OUTPUT_PATH="/home/samuelg9/ros2_ws_host/recordings/output/genz_ekf/cons_scans"
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp scan_republisher; exec bash" &
 
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp scan_to_pc; exec bash" &
-/usr/bin/gnome-terminal --tab -- bash -c "ros2 launch genz_icp odometry.launch.py topic:=/pointcloud_topic min_consecutive_observations:=2; exec bash" &
+/usr/bin/gnome-terminal --tab -- bash -c "ros2 launch genz_icp odometry.launch.py topic:=/pointcloud_topic; exec bash" &
 
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 launch robot_localization ekf.launch.py params_file:=/home/samuelg9/ros2_ws_host/src/robot_localization/params/ekf.yaml; exec bash" &
 
@@ -19,7 +20,7 @@ OUTPUT_PATH="/home/samuelg9/ros2_ws_host/recordings/output/genz_ekf/cons_scans"
 
 if [ "$RECORD" = true ]; then
   # rm -rf ${OUTPUT_PATH}/genz_ekf_${BAG_NAME}
-  /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag record -o ${OUTPUT_PATH}/genz_ekf_${BAG_NAME}_4 /genz/local_map /genz/non_planar_points /genz/odometry /genz/planar_points /ground_truth_wrapper /imu /odometry/filtered /scan_merged_c /tf /tf_static /wheel_odom; exec bash" &
+  /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag record -o ${OUTPUT_PATH} /genz/local_map /genz/non_planar_points /genz/odometry /genz/planar_points /ground_truth_wrapper /imu /odometry/filtered /scan_merged_c /tf /tf_static /wheel_odom; exec bash" &
 fi
 
 sleep 4

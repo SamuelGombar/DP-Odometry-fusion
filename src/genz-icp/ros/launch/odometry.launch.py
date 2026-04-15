@@ -47,7 +47,7 @@ def generate_launch_description():
             DeclareLaunchArgument("min_range", default_value="0.1"),
             # This thing is still not suported: https://github.com/ros2/launch/issues/290#issuecomment-1438476902
             #  DeclareLaunchArgument("voxel_size", default_value=None),
-            DeclareLaunchArgument("voxel_size", default_value="0.3"),
+            DeclareLaunchArgument("voxel_size", default_value="0.075"),
             DeclareLaunchArgument("map_cleanup_radius", default_value="8.0"),
             DeclareLaunchArgument("desired_num_voxelized_points", default_value="4000"),
             DeclareLaunchArgument("planarity_threshold", default_value="0.2"),
@@ -56,7 +56,7 @@ def generate_launch_description():
             DeclareLaunchArgument("convergence_criterion", default_value="0.0001"),
             DeclareLaunchArgument("initial_threshold", default_value="2.0"),
             DeclareLaunchArgument("min_motion_th", default_value="0.1"),
-            DeclareLaunchArgument("min_consecutive_observations", default_value="1000"),
+            DeclareLaunchArgument("min_consecutive_observations", default_value="4"),
             DeclareLaunchArgument("config_file", default_value=""),
             Node(
                 package="genz_icp",
