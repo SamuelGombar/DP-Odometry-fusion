@@ -263,19 +263,6 @@ void OdometryServer::PublishClouds(const rclcpp::Time &stamp,
     const auto genz_map = odometry_.LocalMap();
 
     if (!publish_odom_tf_) {
-        // debugging happens in an egocentric world
-        // std_msgs::msg::Header cloud_header;
-        // cloud_header.stamp = stamp;
-        // cloud_header.frame_id = cloud_frame_id;
-
-        // map_publisher_->publish(std::move(EigenToPointCloud2(genz_map, odom_header)));
-        // planar_points_publisher_->publish(std::move(EigenToPointCloud2(planar_points, cloud_header)));
-        // non_planar_points_publisher_->publish(std::move(EigenToPointCloud2(non_planar_points, cloud_header)));
-
-        // // std_msgs::msg::Header cloud_header;
-        // // cloud_header.stamp = stamp;
-        // // cloud_header.frame_id = cloud_frame_id;
-
         map_publisher_->publish(std::move(EigenToPointCloud2(genz_map, odom_header)));
         planar_points_publisher_->publish(std::move(EigenToPointCloud2(planar_points, odom_header)));
         non_planar_points_publisher_->publish(std::move(EigenToPointCloud2(non_planar_points, odom_header)));

@@ -25,12 +25,12 @@
 #include <Eigen/Core>
 #include <cmath>
 #include <kiss_icp/core/Preprocessing.hpp>
-#include <kiss_icp/core/VoxelHashMap.hpp>
 #include <sophus/se3.hpp>
 #include <tuple>
 #include <vector>
 
 #include "kinematic_icp/correspondence_threshold/CorrespondenceThreshold.hpp"
+#include "kinematic_icp/registration/LocalVoxelMap.hpp"
 #include "kinematic_icp/registration/Registration.hpp"
 
 namespace kinematic_icp::pipeline {
@@ -44,6 +44,9 @@ struct Config {
     unsigned int max_points_per_voxel = 20;
     // Derived parameter, will be computed from other parts of the configuration
     constexpr double map_resolution() const { return voxel_size / std::sqrt(max_points_per_voxel); }
+    // Consecutive observation filter: voxels must be seen this many consecutive
+    // frames before being admitted to the local map (1 = no filtering)
+    int min_consecutive_observations = 1;
     // Correspondence threshold parameters
     bool use_adaptive_threshold = true;
     double fixed_threshold = 1.0;  // <-- Ignored if use_adaptive_threshold = true
@@ -76,7 +79,8 @@ public:
                                     config.fixed_threshold),
           config_(config),
           preprocessor_(config.max_range, config.min_range, config.deskew, config.max_num_threads),
-          local_map_(config.voxel_size, config.max_range, config.max_points_per_voxel) {}
+          local_map_(config.voxel_size, config.max_range, config.max_points_per_voxel,
+                     config.min_consecutive_observations) {}
 
     Vector3dVectorTuple RegisterFrame(const std::vector<Eigen::Vector3d> &frame,
                                       const std::vector<double> &timestamps,
@@ -91,8 +95,8 @@ public:
 
     std::vector<Eigen::Vector3d> LocalMap() const { return local_map_.Pointcloud(); };
 
-    const kiss_icp::VoxelHashMap &VoxelMap() const { return local_map_; };
-    kiss_icp::VoxelHashMap &VoxelMap() { return local_map_; };
+    const kinematic_icp::LocalVoxelMap &VoxelMap() const { return local_map_; };
+    kinematic_icp::LocalVoxelMap &VoxelMap() { return local_map_; };
 
     const Sophus::SE3d &pose() const { return last_pose_; }
     Sophus::SE3d &pose() { return last_pose_; }
@@ -105,7 +109,7 @@ protected:
     Config config_;
     // KISS-ICP pipeline modules
     kiss_icp::Preprocessor preprocessor_;
-    kiss_icp::VoxelHashMap local_map_;
+    kinematic_icp::LocalVoxelMap local_map_;
 };
 
 }  // namespace kinematic_icp::pipeline

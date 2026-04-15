@@ -16,6 +16,7 @@
 
 import rclpy
 from rclpy.time import Time
+from rclpy.duration import Duration
 from rclpy.node import Node
 
 from tf2_ros import TransformBroadcaster
@@ -231,7 +232,12 @@ class Kobuki(Node):
 
     def publish_laser_scan(self, stamp: Time):
         msg = LaserScan()
-        msg.header.stamp = stamp.to_msg()
+
+        # WORKING DESKEW
+        msg.scan_time = 0.17
+        msg.time_increment = msg.scan_time / self.lidar_data.numberOfScans
+
+        msg.header.stamp = (stamp - Duration(seconds=msg.scan_time)).to_msg()
         msg.header.frame_id = 'base_laser'
 
         # Sort to angles ascending
@@ -241,8 +247,9 @@ class Kobuki(Node):
         msg.angle_max = math.radians(360.0 - angles[-1])
         msg.angle_increment = (msg.angle_max - msg.angle_min) / (self.lidar_data.numberOfScans - 1)
 
-        msg.time_increment = 0.0
-        msg.scan_time = 0.17
+        # BEFORE WORKING DESKEW
+        # msg.time_increment = 0.0
+        # msg.scan_time = 0.17
 
         msg.range_min = 0.15
         msg.range_max = 5.0

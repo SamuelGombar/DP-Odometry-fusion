@@ -30,7 +30,7 @@ public:
 
     if (is_kinematic_) {
       keepalive_timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(500),
+        std::chrono::milliseconds(200),
         std::bind(&WheelOdomPublisher::keepaliveCallback, this));
     }
 

@@ -77,6 +77,9 @@ LidarOdometryServer::LidarOdometryServer(rclcpp::Node::SharedPtr node) : node_(n
     config.voxel_size = node->declare_parameter<double>("voxel_size", config.voxel_size);
     config.max_points_per_voxel =
         node->declare_parameter<int>("max_points_per_voxel", config.max_points_per_voxel);
+    config.min_consecutive_observations =
+        node->declare_parameter<int>("min_consecutive_observations",
+                                     config.min_consecutive_observations);
     // Correspondence threshold parameters
     config.use_adaptive_threshold =
         node->declare_parameter<bool>("use_adaptive_threshold", config.use_adaptive_threshold);
