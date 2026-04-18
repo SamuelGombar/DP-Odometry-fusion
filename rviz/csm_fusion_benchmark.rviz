@@ -5,12 +5,10 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /Status1
-        - /Grid1
         - /Wheel Odom1/Shape1
         - /ICP Odom1/Shape1
         - /Fusion Odom1/Shape1
-        - /Fusion Path1
+        - /GT Path1
       Splitter Ratio: 0.5088235139846802
     Tree Height: 707
   - Class: rviz_common/Selection
@@ -30,7 +28,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: LaserScan
 Visualization Manager:
   Class: ""
   Displays:
@@ -64,7 +62,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: Intensity
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -85,7 +83,7 @@ Visualization Manager:
         Value: /scan_merged_c
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
+      Value: true
     - Angle Tolerance: 0.10000000149011612
       Class: rviz_default_plugins/Odometry
       Covariance:
@@ -212,7 +210,7 @@ Visualization Manager:
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
       Line Style: Billboards
-      Line Width: 0.10000000149011612
+      Line Width: 0.20000000298023224
       Name: GT Path
       Offset:
         X: 0
@@ -240,7 +238,7 @@ Visualization Manager:
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
       Line Style: Billboards
-      Line Width: 0.10000000149011612
+      Line Width: 0.20000000298023224
       Name: Wheel Path
       Offset:
         X: 0
@@ -268,7 +266,7 @@ Visualization Manager:
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
       Line Style: Billboards
-      Line Width: 0.10000000149011612
+      Line Width: 0.20000000298023224
       Name: ICP Path
       Offset:
         X: 0
@@ -296,7 +294,7 @@ Visualization Manager:
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
       Line Style: Billboards
-      Line Width: 0.10000000149011612
+      Line Width: 0.20000000298023224
       Name: Fusion Path
       Offset:
         X: 0
@@ -361,25 +359,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 8.786637306213379
+      Distance: 57.011985778808594
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -4.64216423034668
-        Y: 1.6943793296813965
-        Z: -0.0700833722949028
+        X: -3.396346092224121
+        Y: -9.404586791992188
+        Z: 0.8176655173301697
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5647963285446167
+      Pitch: 1.5497963428497314
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.5803942680358887
+      Yaw: 1.5703940391540527
     Saved: ~
 Window Geometry:
   Displays:

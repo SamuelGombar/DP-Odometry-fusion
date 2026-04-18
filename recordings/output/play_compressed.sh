@@ -1,5 +1,5 @@
-BAG_NAME="Candy_7m"
-SUFFIX="_02_1_4"
+BAG_NAME="Frodo_7m"
+SUFFIX="_0075_1_4_second"
 SUBFOLDER=kin
 
 BAG_PATH="/home/samuelg9/ros2_ws_host/recordings/output/${SUBFOLDER}/${BAG_NAME}${SUFFIX}"
@@ -21,7 +21,12 @@ RVIZ="kinematic_icp"
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/wheel_odom -p path_topic:=/wheel_odom_path; exec bash" &
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/ground_truth_wrapper -p path_topic:=/ground_truth_path; exec bash" &
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=${ODOM_TOPIC} -p path_topic:=${ODOM_PATH_TOPIC}; exec bash" &
-/usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/odometry/filtered -p path_topic:=/odometry/path; exec bash" &
+
+if [[ "${SUBFOLDER}" == "csm" ]]; then
+    /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/odom_icp -p path_topic:=/odom_icp_path; exec bash" &
+elif [[ "${SUBFOLDER}" == "genz_ekf" ]]; then
+    /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/odometry/filtered -p path_topic:=/odometry/path; exec bash" &
+fi
 
 # sleep 8
-ros2 service call /compr_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 50.0}"
+ros2 service call /compr_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 40.0}"

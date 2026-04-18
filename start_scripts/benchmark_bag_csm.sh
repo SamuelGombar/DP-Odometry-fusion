@@ -1,9 +1,12 @@
-BAG_NAME="Candy_4m"
-RECORD=false
+BAG_NAME="Ralf_7m"
+SUFFIX="_1"
+RECORD=true
+SUBFOLDER=csm
+OUTPUT_PATH="/home/samuelg9/ros2_ws_host/recordings/output/${SUBFOLDER}/${BAG_NAME}${SUFFIX}"
 
 /usr/bin/gnome-terminal --tab -- bash -c "rviz2 -d /home/samuelg9/ros2_ws_host/rviz/csm_fusion_benchmark.rviz; exec bash" &
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag play /home/samuelg9/ros2_ws_host/recordings/bp/${BAG_NAME} --topics /scan_merged /scan_merged_filtered /amrapi/sensor/velocity /hw_layer/imu/sensor/data; pkill -SIGINT -f 'ros2 bag record'; exec bash" &
-/usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp wheel_odom_publisher; exec bash" &
+/usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp wheel_odom_publisher --ros-args -p is_kinematic:=true; exec bash" &
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp scan_republisher; exec bash" &
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 run ros2_laser_scan_matcher laser_scan_matcher; exec bash" &
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp imu_publisher; exec bash" &
@@ -13,8 +16,8 @@ RECORD=false
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/odom_icp -p path_topic:=/odom_icp_path; exec bash" &
 
 if [ "$RECORD" = true ]; then
-  rm -rf /home/samuelg9/ros2_ws_host/recordings/output/csm/csm_${BAG_NAME}
-  /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag record -o /home/samuelg9/ros2_ws_host/recordings/output/csm/csm_${BAG_NAME} /ground_truth_wrapper /imu /fusion_odometry /scan_merged_c /odom_icp /tf /tf_static /wheel_odom; exec bash" &
+  # rm -rf /home/samuelg9/ros2_ws_host/recordings/output/csm/csm_${BAG_NAME}
+  /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag record -o ${OUTPUT_PATH} /ground_truth_wrapper /imu /fusion_odometry /scan_merged_c /odom_icp /tf /tf_static /wheel_odom; exec bash" &
 fi
 
 sleep 4

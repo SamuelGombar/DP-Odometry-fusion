@@ -21,17 +21,17 @@ public:
         double yaw = tf2::getYaw(msg->pose.pose.orientation);
 
         if (first_) {
-          offset_x_   = x;
-          offset_y_   = y;
+          offset_x_ = x;  // - 0.1
+          offset_y_ = y;
           offset_yaw_ = yaw;
           // offset_yaw_ = 3.135;
           first_ = false;
         }
 
-        double dx  = x - offset_x_;
-        double dy  = y - offset_y_;
-        double cx   =  std::cos(offset_yaw_) * dx + std::sin(offset_yaw_) * dy;
-        double cy   = -std::sin(offset_yaw_) * dx + std::cos(offset_yaw_) * dy;
+        double dx = x - offset_x_;
+        double dy = y - offset_y_;
+        double cx =  std::cos(offset_yaw_) * dx + std::sin(offset_yaw_) * dy;
+        double cy = -std::sin(offset_yaw_) * dx + std::cos(offset_yaw_) * dy;
         double cyaw = yaw - offset_yaw_;
         cyaw = std::atan2(std::sin(cyaw), std::cos(cyaw));
 
@@ -39,13 +39,13 @@ public:
         q.setRPY(0.0, 0.0, cyaw);
 
         auto out = *msg;
-        out.header.stamp            = this->now();
-        out.header.frame_id         = "odom";
-        out.child_frame_id          = "base_link";
-        out.pose.pose.position.x    = cx;
-        out.pose.pose.position.y    = cy;
-        out.pose.pose.position.z    = 0.0;
-        out.pose.pose.orientation   = tf2::toMsg(q);
+        out.header.stamp = this->now();
+        out.header.frame_id = "odom";
+        out.child_frame_id = "base_link";
+        out.pose.pose.position.x = cx;
+        out.pose.pose.position.y = cy;
+        out.pose.pose.position.z = 0.0;
+        out.pose.pose.orientation = tf2::toMsg(q);
         pub_->publish(out);
       });
   }

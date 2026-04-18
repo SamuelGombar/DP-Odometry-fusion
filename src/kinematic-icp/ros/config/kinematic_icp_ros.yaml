@@ -4,10 +4,8 @@
     max_range: 7.0
     min_range: 0.0
     # Mapping parameters
-    voxel_size: 0.2       #
-    max_points_per_voxel: 1 #
-    # Temporal filter: number of consecutive frames a voxel must be observed
-    # before being added to the local map (1 = disabled, 3 = typical for dynamic filtering)
+    voxel_size: 0.075       #
+    max_points_per_voxel: 1
     min_consecutive_observations: 4 #
 
     # Correspondence threshold parameters

@@ -1,5 +1,5 @@
-BAG_NAME="Candy_7m"
-SUFFIX="_02_1_1_20000"
+BAG_NAME="Frodo_7m"
+SUFFIX="_0075_1_4_second"
 RECORD=true
 SUBFOLDER=kin
 OUTPUT_PATH="/home/samuelg9/ros2_ws_host/recordings/output/${SUBFOLDER}/${BAG_NAME}${SUFFIX}"

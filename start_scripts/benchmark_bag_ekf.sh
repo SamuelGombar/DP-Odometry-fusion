@@ -1,5 +1,5 @@
-BAG_NAME="Ralf_7m"
-SUFFIX="_3_03"
+BAG_NAME="brightpick_degen"
+SUFFIX="0"
 RECORD=true
 SUBFOLDER=genz_ekf
 OUTPUT_PATH="/home/samuelg9/ros2_ws_host/recordings/output/${SUBFOLDER}/${BAG_NAME}${SUFFIX}"

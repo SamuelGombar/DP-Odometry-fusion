@@ -32,13 +32,11 @@ private:
     out.header.frame_id = "odom";
     out.child_frame_id = "base_link";
 
-    // fill pose from Pose message
     double x = msg->position.y;
     double y = msg->position.x;
     double yaw = tf2::getYaw(msg->orientation);
     out.pose.pose = *msg;
 
-    // Handle first message
     if (first_) {
       offset_x_ = x;
       offset_y_ = y;
@@ -46,13 +44,11 @@ private:
       first_ = false;
     }
 
-    // Apply offset correction
     double corrected_x = x - offset_x_;
     double corrected_y = y - offset_y_;
     double corrected_theta = yaw - offset_theta_;
     corrected_theta = std::atan2(std::sin(corrected_theta), std::cos(corrected_theta));
 
-    // Update pose
     out.pose.pose.position.x = corrected_x;
     out.pose.pose.position.y = corrected_y;
     tf2::Quaternion corrected_q;
@@ -61,7 +57,6 @@ private:
 
     pub_->publish(out);
 
-    // append to path and publish
     geometry_msgs::msg::PoseStamped ps;
     ps.header = out.header;
     ps.pose = out.pose.pose;
@@ -69,7 +64,6 @@ private:
     path_msg_.header = out.header;
     path_pub_->publish(path_msg_);
 
-    // broadcast transform odom -> base_link
     geometry_msgs::msg::TransformStamped tf;
     tf.header.stamp = out.header.stamp;
     tf.header.frame_id = "odom";
