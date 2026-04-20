@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Wheel Path1
       Splitter Ratio: 0.5088235139846802
     Tree Height: 707
   - Class: rviz_common/Selection

@@ -1,5 +1,5 @@
 BAG_NAME="Frodo_7m"
-SUFFIX="_0075_1_4_second"
+SUFFIX="_0075_1_4_third"
 RECORD=true
 SUBFOLDER=kin
 OUTPUT_PATH="/home/samuelg9/ros2_ws_host/recordings/output/${SUBFOLDER}/${BAG_NAME}${SUFFIX}"
@@ -28,5 +28,10 @@ sleep 2
 # sleep 10
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/ground_truth_wrapper -p path_topic:=/ground_truth_path -p use_sim_time:=true; exec bash" &
 
-sleep 5
-ros2 service call /gt_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 5.0}"
+# sleep 2
+ros2 service call /gt_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 1.0}"
+
+# ros2 run robot_control_cpp trajectory_error --ros-args \
+#   -p odometry_topic:=/kinematic_icp/lidar_odometry \
+#   -p ground_truth_topic:=/ground_truth_wrapper \
+#   -p output_file:=/home/samuelg9/ros2_ws_host/my_run.csv

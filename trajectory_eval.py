@@ -1,0 +1,364 @@
+#!/usr/bin/env python3
+"""
+Offline Trajectory Error Evaluator — Computes ATE between odometry and ground truth
+from a recorded ROS 2 bag file.
+
+Usage:
+    python3 trajectory_eval.py <bag_path> [options]
+
+Requires a sourced ROS 2 environment:
+    source /opt/ros/jazzy/setup.bash
+    source install/setup.bash
+
+Both topics must publish nav_msgs/Odometry.
+"""
+
+import argparse
+import csv
+import glob
+import os
+import sys
+
+import numpy as np
+
+
+# ---------------------------------------------------------------------------
+# Bag helpers
+# ---------------------------------------------------------------------------
+
+def _detect_storage_id(bag_path: str) -> str:
+    if glob.glob(os.path.join(bag_path, "*.db3")):
+        return "sqlite3"
+    if glob.glob(os.path.join(bag_path, "*.mcap")):
+        return "mcap"
+    return "sqlite3"  # fallback
+
+
+def read_poses_from_bag(
+    bag_path: str, topics: list[str]
+) -> dict[str, list[tuple[int, float, float]]]:
+    """
+    Open the bag once, read all messages on the given topics, and return:
+        { topic: [(timestamp_ns, x, y), ...] }
+    timestamp_ns is taken from msg.header.stamp.
+    """
+    import rosbag2_py
+    from rclpy.serialization import deserialize_message
+    from rosidl_runtime_py.utilities import get_message
+
+    storage_options = rosbag2_py.StorageOptions(
+        uri=bag_path, storage_id=_detect_storage_id(bag_path)
+    )
+    converter_options = rosbag2_py.ConverterOptions("", "")
+
+    reader = rosbag2_py.SequentialReader()
+    reader.open(storage_options, converter_options)
+
+    topic_type_map = {t.name: t.type for t in reader.get_all_topics_and_types()}
+
+    # Validate topics
+    missing = [t for t in topics if t not in topic_type_map]
+    if missing:
+        available = sorted(topic_type_map.keys())
+        print("ERROR: The following topics were not found in the bag:", file=sys.stderr)
+        for t in missing:
+            print(f"  {t}", file=sys.stderr)
+        print("Available topics:", file=sys.stderr)
+        for t in available:
+            print(f"  {t}", file=sys.stderr)
+        sys.exit(1)
+
+    # Cache message type objects
+    msg_types: dict[str, type] = {}
+    for t in topics:
+        msg_types[t] = get_message(topic_type_map[t])
+
+    storage_filter = rosbag2_py.StorageFilter(topics=topics)
+    reader.set_filter(storage_filter)
+
+    results: dict[str, list[tuple[int, float, float]]] = {t: [] for t in topics}
+
+    while reader.has_next():
+        topic, data, _ = reader.read_next()
+        if topic not in msg_types:
+            continue
+        msg = deserialize_message(data, msg_types[topic])
+        stamp_ns = (
+            msg.header.stamp.sec * 1_000_000_000 + msg.header.stamp.nanosec
+        )
+        x = msg.pose.pose.position.x
+        y = msg.pose.pose.position.y
+        results[topic].append((stamp_ns, x, y))
+
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Matching strategies
+# ---------------------------------------------------------------------------
+
+def match_spatial(
+    est_poses: list[tuple[int, float, float]],
+    gt_poses: list[tuple[int, float, float]],
+    deduplicate: bool,
+) -> list[tuple[int, float, float, float, float, float]]:
+    """
+    Match estimated poses to the nearest GT pose in 2D (x, y) using a KD-tree.
+    Returns rows of (timestamp_ns, x_est, y_est, x_gt, y_gt, error_m).
+    """
+    from scipy.spatial import KDTree
+
+    gt_arr = np.array([[p[1], p[2]] for p in gt_poses])
+    est_arr = np.array([[p[1], p[2]] for p in est_poses])
+    tree = KDTree(gt_arr)
+
+    rows = []
+
+    if not deduplicate:
+        dists, idxs = tree.query(est_arr)
+        for i, ep in enumerate(est_poses):
+            gp = gt_poses[idxs[i]]
+            rows.append((ep[0], ep[1], ep[2], gp[1], gp[2], float(dists[i])))
+        return rows
+
+    # Deduplicate: each GT pose matched at most once, iterating over estimated poses.
+    k = min(len(gt_arr), 20)
+    used: set[int] = set()
+    fallback_count = 0
+
+    for ep in est_poses:
+        dists, idxs = tree.query([ep[1], ep[2]], k=k)
+        # k=1 returns scalars — normalise to arrays
+        if k == 1:
+            dists = [float(dists)]
+            idxs = [int(idxs)]
+
+        matched = False
+        for dist, idx in zip(dists, idxs):
+            if idx not in used:
+                used.add(idx)
+                gp = gt_poses[idx]
+                rows.append((ep[0], ep[1], ep[2], gp[1], gp[2], float(dist)))
+                matched = True
+                break
+
+        if not matched:
+            # All k candidates were already taken; fall back to nearest regardless.
+            dist0, idx0 = tree.query([ep[1], ep[2]], k=1)
+            gp = gt_poses[int(idx0)]
+            rows.append((ep[0], ep[1], ep[2], gp[1], gp[2], float(dist0)))
+            fallback_count += 1
+
+    if fallback_count:
+        print(
+            f"  Warning: {fallback_count} poses fell back to nearest GT (dedup pool "
+            f"of k={k} exhausted). Consider a denser GT trajectory.",
+            file=sys.stderr,
+        )
+
+    return rows
+
+
+def match_temporal(
+    est_poses: list[tuple[int, float, float]],
+    gt_poses: list[tuple[int, float, float]],
+    max_dt_ns: int,
+) -> list[tuple[int, float, float, float, float, float]]:
+    """
+    Match estimated poses to GT by nearest timestamp.
+    Pairs where |t_est - t_gt| > max_dt_ns are dropped.
+    Returns rows of (timestamp_ns, x_est, y_est, x_gt, y_gt, error_m).
+    """
+    gt_times = np.array([p[0] for p in gt_poses], dtype=np.int64)
+    sorted_idx = np.argsort(gt_times)
+    gt_sorted = [gt_poses[i] for i in sorted_idx]
+    gt_times_sorted = gt_times[sorted_idx]
+
+    rows = []
+    dropped = 0
+
+    for ep in est_poses:
+        t = ep[0]
+        idx = int(np.searchsorted(gt_times_sorted, t))
+
+        # Pick the closer of the two bracketing timestamps
+        candidates = []
+        if idx < len(gt_sorted):
+            candidates.append(idx)
+        if idx > 0:
+            candidates.append(idx - 1)
+
+        best = min(candidates, key=lambda i: abs(int(gt_times_sorted[i]) - t))
+        dt = abs(int(gt_times_sorted[best]) - t)
+
+        if dt > max_dt_ns:
+            dropped += 1
+            continue
+
+        gp = gt_sorted[best]
+        error = float(np.hypot(ep[1] - gp[1], ep[2] - gp[2]))
+        rows.append((ep[0], ep[1], ep[2], gp[1], gp[2], error))
+
+    if dropped:
+        print(
+            f"  Warning: {dropped} estimated poses dropped (no GT match within "
+            f"{max_dt_ns / 1e9:.3f} s). Adjust --max-dt if needed.",
+            file=sys.stderr,
+        )
+
+    return rows
+
+
+# ---------------------------------------------------------------------------
+# ATE computation
+# ---------------------------------------------------------------------------
+
+def compute_ate(errors: list[float]) -> tuple[float, float, float, float]:
+    e = np.array(errors)
+    return (
+        float(np.sqrt(np.mean(e ** 2))),  # RMSE
+        float(np.mean(e)),                # mean
+        float(np.std(e)),                 # std dev
+        float(np.max(e)),                 # max
+    )
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Compute ATE (Absolute Trajectory Error) between an odometry topic "
+            "and a ground truth topic stored in a ROS 2 bag file."
+        )
+    )
+    parser.add_argument("bag_path", help="Path to the ROS 2 bag directory")
+    parser.add_argument(
+        "--odom-topic",
+        default="/odometry/filtered",
+        metavar="TOPIC",
+        help="Estimated odometry topic (nav_msgs/Odometry). Default: /odometry/filtered",
+    )
+    parser.add_argument(
+        "--gt-topic",
+        default="/ground_truth_wrapper",
+        metavar="TOPIC",
+        help="Ground truth topic (nav_msgs/Odometry). Default: /ground_truth_wrapper",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["spatial", "temporal"],
+        default="spatial",
+        help=(
+            "Matching mode. 'spatial': nearest-neighbour on 2D position (KD-tree) — "
+            "robust when timestamps are on different time bases (e.g. sped-up GT bag). "
+            "'temporal': nearest-neighbour on header timestamp. Default: spatial"
+        ),
+    )
+    parser.add_argument(
+        "--deduplicate",
+        action="store_true",
+        help=(
+            "[spatial mode only] Each GT pose is matched at most once. "
+            "Prevents trajectory loops or dense clusters from pulling many estimated "
+            "poses to the same GT point."
+        ),
+    )
+    parser.add_argument(
+        "--max-dt",
+        type=float,
+        default=0.1,
+        metavar="SECONDS",
+        help="[temporal mode only] Max allowed time difference in seconds for a valid match. Default: 0.1",
+    )
+    parser.add_argument(
+        "--output-csv",
+        metavar="CSV_PATH",
+        help="Write per-pose results to this CSV file (timestamp_s, x_est, y_est, x_gt, y_gt, error_m)",
+    )
+    args = parser.parse_args()
+
+    bag_path = os.path.abspath(args.bag_path)
+    if not os.path.isdir(bag_path):
+        print(f"ERROR: bag path not found or not a directory: {bag_path}", file=sys.stderr)
+        sys.exit(1)
+
+    # --- Print header ---
+    print()
+    print(f"Bag        : {bag_path}")
+    print(f"Odom topic : {args.odom_topic}")
+    print(f"GT topic   : {args.gt_topic}")
+    mode_label = args.mode
+    if args.mode == "spatial" and args.deduplicate:
+        mode_label += " (deduplicate ON)"
+    print(f"Mode       : {mode_label}")
+    print()
+
+    # --- Read bag (single pass) ---
+    print("Reading bag...")
+    poses = read_poses_from_bag(bag_path, [args.odom_topic, args.gt_topic])
+    est_poses = poses[args.odom_topic]
+    gt_poses = poses[args.gt_topic]
+
+    print(f"  Estimated poses : {len(est_poses)}")
+    print(f"  GT poses        : {len(gt_poses)}")
+
+    if not est_poses:
+        print(f'ERROR: No messages found on topic "{args.odom_topic}"', file=sys.stderr)
+        sys.exit(1)
+    if not gt_poses:
+        print(f'ERROR: No messages found on topic "{args.gt_topic}"', file=sys.stderr)
+        sys.exit(1)
+
+    # --- Match ---
+    print("Matching poses...")
+    if args.mode == "spatial":
+        rows = match_spatial(est_poses, gt_poses, args.deduplicate)
+    else:
+        max_dt_ns = int(args.max_dt * 1_000_000_000)
+        rows = match_temporal(est_poses, gt_poses, max_dt_ns)
+
+    if not rows:
+        print(
+            "ERROR: No pose pairs matched. Check topic names and, for temporal mode, --max-dt.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    # --- ATE ---
+    errors = [r[5] for r in rows]
+    rmse, mean, std, max_e = compute_ate(errors)
+
+    print()
+    print("=" * 47)
+    print("  Absolute Trajectory Error (ATE) — 2D")
+    print("=" * 47)
+    print(f"  Matched pairs : {len(rows):>8}")
+    print(f"  RMSE          : {rmse:>10.4f} m")
+    print(f"  Mean          : {mean:>10.4f} m")
+    print(f"  Std dev       : {std:>10.4f} m")
+    print(f"  Max           : {max_e:>10.4f} m")
+    print("=" * 47)
+
+    # --- Optional CSV ---
+    if args.output_csv:
+        out_path = os.path.abspath(args.output_csv)
+        with open(out_path, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["timestamp_s", "x_est", "y_est", "x_gt", "y_gt", "error_m"])
+            for r in rows:
+                writer.writerow([
+                    f"{r[0] / 1e9:.9f}",
+                    f"{r[1]:.6f}",
+                    f"{r[2]:.6f}",
+                    f"{r[3]:.6f}",
+                    f"{r[4]:.6f}",
+                    f"{r[5]:.6f}",
+                ])
+        print(f"\nPer-pose results written to: {out_path}")
+
+
+if __name__ == "__main__":
+    main()

@@ -20,6 +20,7 @@
   <depend>tf2_ros</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>laser_geometry</depend>
+  <depend>std_msgs</depend>
   <depend>amrapi_msgs</depend>
   <depend>hw_layer_msgs</depend>
 

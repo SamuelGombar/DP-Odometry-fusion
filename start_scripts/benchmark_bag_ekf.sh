@@ -1,5 +1,5 @@
-BAG_NAME="brightpick_degen"
-SUFFIX="0"
+BAG_NAME="Frodo_4m"
+SUFFIX="_01_1_4"
 RECORD=true
 SUBFOLDER=genz_ekf
 OUTPUT_PATH="/home/samuelg9/ros2_ws_host/recordings/output/${SUBFOLDER}/${BAG_NAME}${SUFFIX}"
@@ -32,4 +32,4 @@ sleep 2
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/ground_truth_wrapper -p path_topic:=/ground_truth_path; exec bash" &
 
 sleep 5
-ros2 service call /gt_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 5.0}"
+# ros2 service call /gt_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 5.0}"

@@ -29,4 +29,4 @@ elif [[ "${SUBFOLDER}" == "genz_ekf" ]]; then
 fi
 
 # sleep 8
-ros2 service call /compr_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 40.0}"
+# ros2 service call /compr_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 50.0}"

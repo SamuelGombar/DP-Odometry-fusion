@@ -23,6 +23,7 @@ setup(
     entry_points={
         'console_scripts': [
             'uds_kobuki_ros = uds_kobuki_ros.uds_kobuki_ros:main',
+            'plot_trajectory_error = uds_kobuki_ros.plot_trajectory_error:main',
         ],
     },
 )
