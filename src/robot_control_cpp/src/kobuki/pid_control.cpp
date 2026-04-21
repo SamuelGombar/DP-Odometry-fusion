@@ -56,18 +56,25 @@ private:
         static bool is_moving = false;
         static bool is_rotating = true;
         static bool combined_regulator = true;
-        static double TOLER = 0.1;
+        static double TOLER = 0.07;
         static bool finish = false;
         static Point last_checkpoint;
         static double datacounter = 0.0;
 
         if (flag) {
-            checkpoints.push_back({0, 3.5});
-            checkpoints.push_back({2.9, 3.5});
-            checkpoints.push_back({2.9, 1.75});
-            // checkpoints.push_back({0.8, 1.5});
+            // NCR
             // checkpoints.push_back({0, 3.5});
-            // checkpoints.push_back({0, 0});
+            // checkpoints.push_back({2.9, 3.5});
+            // checkpoints.push_back({2.9, 1.75});
+            // // checkpoints.push_back({0.8, 1.5});
+            // // checkpoints.push_back({0, 3.5});
+            // // checkpoints.push_back({0, 0});
+
+            // OPTITRACK
+            checkpoints.push_back({-2.34, -0.14});
+            checkpoints.push_back({-2.52, 3.60});
+            checkpoints.push_back({0.1, 3.60});
+            checkpoints.push_back({-0.02, 0.415});
             flag = false;
         }
 		

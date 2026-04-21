@@ -39,19 +39,18 @@ class MobileRobot:
         pass
 
     def update_diff_drive(self, timestamp, left_encoder, right_encoder):
-        if timestamp == 0:
-            delta_left = 0.0
-            delta_right = 0.0
-            if self.initial_left_encoder == 0.0 or self.initial_right_encoder == 0.0:
-                self.initial_left_encoder = left_encoder
-                self.initial_right_encoder = right_encoder
-                delta_left = left_encoder - self.initial_left_encoder
-                delta_right = right_encoder - self.initial_right_encoder
+        if not self.init_diff_drive:
+            # Capture first encoder readings so odometry always starts at 0
+            self.last_tick_left = left_encoder
+            self.last_tick_right = right_encoder
             self.last_timestamp = timestamp
-            self.last_tick_left = left_encoder - delta_left
-            self.last_tick_right = right_encoder - delta_right
+            self.init_diff_drive = True
             return [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]
-        
+
+        if timestamp == 0:
+            self.last_timestamp = timestamp
+            return [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]
+
         left_diff_ticks = calculate_diff_ticks(self.last_tick_left, left_encoder)
         self.last_tick_left = left_encoder
         self.last_rad_left += self.tick_to_rad * left_diff_ticks

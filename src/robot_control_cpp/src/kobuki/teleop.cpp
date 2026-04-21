@@ -3,6 +3,8 @@
 #include <termios.h>
 #include <unistd.h>
 #include <iostream>
+#include <cmath>
+#include <algorithm>
 
 class TeleopNode : public rclcpp::Node
 {
@@ -10,19 +12,30 @@ public:
     TeleopNode() : Node("teleop_cmd_vel")
     {
         pub_ = this->create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
-        RCLCPP_INFO(this->get_logger(), "Use arrow keys to move the robot. Ctrl-C to quit.");
+        RCLCPP_INFO(this->get_logger(), "Use arrow keys to move the robot. Space to stop. Ctrl-C to quit.");
         this->run();
     }
 
 private:
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_;
-    double current_linear_speed_ = 0.0;
-    double current_angular_speed_ = 0.0;
-    const double LINEAR_INCREMENT = 0.1;
-    const double ANGULAR_INCREMENT = 3.14 / 40.0;
-    const double MAX_LINEAR_SPEED = 500;
-    const double MAX_ANGULAR_SPEED = 3.14 / 4;
-    const double DECELERATION_RATE = 0.05;
+    const double MAX_LINEAR_SPEED  = 0.5;
+    const double MAX_ANGULAR_SPEED  = 3.14 / 2.0;
+    const double LINEAR_INCREMENT   = 0.05;  // m/s per key press
+    const double ANGULAR_INCREMENT  = 0.1;   // rad/s per key press
+    const double LINEAR_STEP        = 0.03;  // m/s per ~100 ms ramp step
+    const double ANGULAR_STEP       = 0.08;  // rad/s per ~100 ms ramp step
+
+    double target_linear_  = 0.0;
+    double target_angular_ = 0.0;
+    double actual_linear_  = 0.0;
+    double actual_angular_ = 0.0;
+
+    static double ramp(double actual, double target, double step)
+    {
+        double diff = target - actual;
+        if (std::abs(diff) <= step) return target;
+        return actual + (diff > 0 ? step : -step);
+    }
 
     char getKey()
     {
@@ -47,57 +60,34 @@ private:
         while (rclcpp::ok())
         {
             char c = getKey();
-            // Arrow keys produce escape sequences: "\033[A" up, "\033[B" down, "\033[C" right, "\033[D" left
+
             if (c == '\033') // escape sequence
             {
                 getKey(); // skip '['
                 switch (getKey())
                 {
-                case 'A': // up - increment forward speed
-                    current_linear_speed_ += LINEAR_INCREMENT;
-                    if (current_linear_speed_ > MAX_LINEAR_SPEED)
-                        current_linear_speed_ = MAX_LINEAR_SPEED;
-                    break;
-                case 'B': // down - decrement forward speed
-                    current_linear_speed_ -= LINEAR_INCREMENT;
-                    if (current_linear_speed_ < -MAX_LINEAR_SPEED)
-                        current_linear_speed_ = -MAX_LINEAR_SPEED;
-                    break;
-                case 'C': // right - decrease angular speed (turn right)
-                    current_angular_speed_ -= ANGULAR_INCREMENT;
-                    if (current_angular_speed_ < -MAX_ANGULAR_SPEED)
-                        current_angular_speed_ = -MAX_ANGULAR_SPEED;
-                    break;
-                case 'D': // left - increase angular speed (turn left)
-                    current_angular_speed_ += ANGULAR_INCREMENT;
-                    if (current_angular_speed_ > MAX_ANGULAR_SPEED)
-                        current_angular_speed_ = MAX_ANGULAR_SPEED;
-                    break;
-                default:
-                    break;
+                case 'A': target_linear_  = std::clamp(target_linear_  + LINEAR_INCREMENT,  -MAX_LINEAR_SPEED,  MAX_LINEAR_SPEED);  break; // up
+                case 'B': target_linear_  = std::clamp(target_linear_  - LINEAR_INCREMENT,  -MAX_LINEAR_SPEED,  MAX_LINEAR_SPEED);  break; // down
+                case 'C': target_angular_ = std::clamp(target_angular_ - ANGULAR_INCREMENT, -MAX_ANGULAR_SPEED, MAX_ANGULAR_SPEED); break; // right
+                case 'D': target_angular_ = std::clamp(target_angular_ + ANGULAR_INCREMENT, -MAX_ANGULAR_SPEED, MAX_ANGULAR_SPEED); break; // left
+                default: break;
                 }
             }
-            else if (c == 'q') // quit
+            else if (c == ' ') // stop
+            {
+                target_linear_  = 0.0;
+                target_angular_ = 0.0;
+            }
+            else if (c == 'q')
             {
                 break;
             }
-            else if (c == 0) // no key pressed - apply deceleration
-            {
-                // Gradually slow down linear speed
-                if (current_linear_speed_ > 0)
-                    current_linear_speed_ -= DECELERATION_RATE;
-                else if (current_linear_speed_ < 0)
-                    current_linear_speed_ += DECELERATION_RATE;
-                
-                // Gradually slow down angular speed
-                if (current_angular_speed_ > 0)
-                    current_angular_speed_ -= DECELERATION_RATE;
-                else if (current_angular_speed_ < 0)
-                    current_angular_speed_ += DECELERATION_RATE;
-            }
-            
-            msg.linear.x = current_linear_speed_;
-            msg.angular.z = current_angular_speed_;
+
+            actual_linear_  = ramp(actual_linear_,  target_linear_,  LINEAR_STEP);
+            actual_angular_ = ramp(actual_angular_, target_angular_, ANGULAR_STEP);
+
+            msg.linear.x  = actual_linear_;
+            msg.angular.z = actual_angular_;
             pub_->publish(msg);
         }
     }
