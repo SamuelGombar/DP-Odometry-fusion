@@ -62,6 +62,7 @@ OdometryServer::OdometryServer(const rclcpp::NodeOptions &options)
     odom_frame_ = declare_parameter<std::string>("odom_frame", odom_frame_);
     publish_odom_tf_ = declare_parameter<bool>("publish_odom_tf", publish_odom_tf_);
     publish_debug_clouds_ = declare_parameter<bool>("visualize", publish_debug_clouds_);
+    kobuki_ = declare_parameter<bool>("kobuki", kobuki_);
     declare_parameter<double>("max_range", config_.max_range);
     declare_parameter<double>("min_range", config_.min_range);
     declare_parameter<bool>("deskew", config_.deskew);
@@ -239,14 +240,15 @@ void OdometryServer::PublishOdometry(const Sophus::SE3d &pose,
     odom_msg.header.frame_id = odom_frame_;
     odom_msg.pose.pose = tf2::sophusToPose(pose);
 
-    // odom_msg.pose.covariance[0] = 0.08;
-    // odom_msg.pose.covariance[7] = 0.08;
-    // odom_msg.pose.covariance[35] = 0.001;
-    
-    //KOBUKI
-    odom_msg.pose.covariance[0] = 0.0001;
-    odom_msg.pose.covariance[7] = 0.0001;
-    odom_msg.pose.covariance[35] = 0.00001;
+    if (kobuki_) {
+        odom_msg.pose.covariance[0] = 0.0001;
+        odom_msg.pose.covariance[7] = 0.0001;
+        odom_msg.pose.covariance[35] = 0.00001;
+    } else {
+        odom_msg.pose.covariance[0] = 0.08;
+        odom_msg.pose.covariance[7] = 0.08;
+        odom_msg.pose.covariance[35] = 0.001;
+    }
 
     odom_publisher_->publish(std::move(odom_msg));
 }

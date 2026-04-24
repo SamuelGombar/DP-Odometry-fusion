@@ -1,6 +1,6 @@
 BAG_NAME="Frodo_4m"
 SUFFIX="_01_1_4"
-RECORD=true
+RECORD=false
 SUBFOLDER=genz_ekf
 OUTPUT_PATH="/home/samuelg9/ros2_ws_host/recordings/output/${SUBFOLDER}/${BAG_NAME}${SUFFIX}"
 

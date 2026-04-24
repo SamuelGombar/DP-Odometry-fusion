@@ -59,6 +59,7 @@ def generate_launch_description():
             DeclareLaunchArgument("min_consecutive_observations", default_value="4"),
             DeclareLaunchArgument("config_file", default_value=""),
             DeclareLaunchArgument("use_sim_time", default_value="false"),
+            DeclareLaunchArgument("kobuki", default_value="false"),
             Node(
                 package="genz_icp",
                 executable="odometry_node",
@@ -86,6 +87,7 @@ def generate_launch_description():
                         "visualize": LaunchConfiguration("visualize"),
                         "config_file": LaunchConfiguration("config_file"),
                         "use_sim_time": LaunchConfiguration("use_sim_time"),
+                        "kobuki": LaunchConfiguration("kobuki"),
                     }
                 ],
             ),

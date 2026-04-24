@@ -1,5 +1,5 @@
-BAG_NAME=optitrack_6_1
-KOBUKI=true
+BAG_NAME=Frodo_4m_4_0075
+KOBUKI=false
 
 echo "Select odometry pipeline:"
 echo "  1) CSM"

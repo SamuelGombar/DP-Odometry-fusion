@@ -1,5 +1,5 @@
-BAG_NAME="Frodo_4m"
-SUFFIX="_1"
+BAG_NAME="Candy_4m"
+SUFFIX="_trash"
 RECORD=false
 
 echo "Select odometry pipeline:"

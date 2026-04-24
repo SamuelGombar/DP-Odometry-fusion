@@ -11,6 +11,8 @@ public:
   {
     this->declare_parameter<bool>("is_kinematic", false);
     is_kinematic = this->get_parameter("is_kinematic").as_bool();
+    this->declare_parameter<bool>("kobuki", false);
+    kobuki_ = this->get_parameter("kobuki").as_bool();
     pub_ = this->create_publisher<sensor_msgs::msg::LaserScan>("/scan_merged_c", 10);
     tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(this);
     static_tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this);
@@ -32,9 +34,7 @@ public:
     sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
       "/scan_merged", 10,
       [this](const sensor_msgs::msg::LaserScan::SharedPtr msg) {
-        // rclcpp::Time stamp = is_kinematic ? rclcpp::Time(msg->header.stamp) : this->now();
-        // rclcpp::Time stamp = this->now();
-        rclcpp::Time stamp = rclcpp::Time(msg->header.stamp);
+        rclcpp::Time stamp = kobuki_ ? rclcpp::Time(msg->header.stamp) : this->now() ;
 
         geometry_msgs::msg::TransformStamped map_to_odom;
         map_to_odom.header.stamp = stamp;
@@ -57,6 +57,7 @@ private:
   std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_broadcaster_;
   bool is_kinematic;
+  bool kobuki_ = false;
 };
 
 int main(int argc, char **argv)
