@@ -25,15 +25,24 @@ from launch.actions import DeclareLaunchArgument
 
 def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
+    params_file = LaunchConfiguration(
+        'params_file',
+        default=os.path.join(get_package_share_directory("robot_localization"), 'params', 'ekf.yaml'),
+    )
     return LaunchDescription([
         DeclareLaunchArgument('use_sim_time', default_value='false'),
+        DeclareLaunchArgument(
+            'params_file',
+            default_value=os.path.join(get_package_share_directory("robot_localization"), 'params', 'ekf.yaml'),
+            description='Full path to the EKF parameters YAML file',
+        ),
         launch_ros.actions.Node(
             package='robot_localization',
             executable='ekf_node',
             name='ekf_filter_node',
             output='screen',
             parameters=[
-                os.path.join(get_package_share_directory("robot_localization"), 'params', 'ekf.yaml'),
+                params_file,
                 {'use_sim_time': use_sim_time},
             ],
            ),

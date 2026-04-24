@@ -49,7 +49,7 @@ elif [ "$ODOM_TYPE" = "genz_ekf" ]; then
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp scan_republisher --ros-args -r /scan_merged:=/scan_c -r /scan_merged_c:=/scan -p use_sim_time:=true; exec bash" &
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp scan_to_pc --ros-args -p input_topic:=/scan -p use_sim_time:=true; exec bash" &
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 launch genz_icp odometry.launch.py topic:=/pointcloud_topic min_consecutive_observations:=5 voxel_size:=0.1; exec bash" &
-  /usr/bin/gnome-terminal --tab -- bash -c "ros2 launch robot_localization ekf.launch.py use_sim_time:=true; exec bash" &
+  /usr/bin/gnome-terminal --tab -- bash -c "ros2 launch robot_localization ekf.launch.py use_sim_time:=true params_file:=/home/samuelg9/ros2_ws_host/src/robot_localization/params/ekf_kobuki.yaml; exec bash" &
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/odometry/filtered -p path_topic:=/odometry/path -p use_sim_time:=true; exec bash" &
   if [ "$RECORD" = true ]; then
     /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag record -o ${OUTPUT} /scan /odom /imu /genz/odometry /genz/local_map /genz/non_planar_points /genz/planar_points /odometry/filtered /tf /tf_static /vrpn_mocap/RigidBody_002/pose; exec bash" &
