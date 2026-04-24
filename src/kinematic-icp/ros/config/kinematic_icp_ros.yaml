@@ -17,6 +17,7 @@
     convergence_criterion: 0.001
     max_num_threads: 1
     use_adaptive_odometry_regularization: false  #
+    # use_adaptive_odometry_regularization: true  # KOBUKI
     fixed_regularization: 20000.0 # Ignored if use_adaptive_odometry_regularization=true
 
     # Motion Compensation

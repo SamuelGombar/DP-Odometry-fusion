@@ -197,6 +197,8 @@ LaserScanMatcher::LaserScanMatcher() : Node("laser_scan_matcher"), initialized_(
   kf_dist_angular_ = this->get_parameter("kf_dist_angular").as_double();
   odom_topic_   = this->get_parameter("publish_odom").as_string();
   publish_tf_   = this->get_parameter("publish_tf").as_bool();
+  add_parameter("optitrack", rclcpp::ParameterValue(false), "Invert x and y in output poses.");
+  optitrack_    = this->get_parameter("optitrack").as_bool();
   scan_topic_   = this->get_parameter("scan_topic").as_string();
   wheel_odom_topic_ = this->get_parameter("wheel_odom_topic").as_string();
 
@@ -245,6 +247,7 @@ LaserScanMatcher::LaserScanMatcher() : Node("laser_scan_matcher"), initialized_(
   prev_fusion_.setIdentity();
   imu_orientation_.setValue(0.0, 0.0, 0.0, 1.0);
   imu_received_ = false;
+  imu_msg_count_ = 0;
   input_.laser[0] = 0.0;
   input_.laser[1] = 0.0;
   input_.laser[2] = 0.0;
@@ -301,7 +304,6 @@ void LaserScanMatcher::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
     msg->orientation.z,
     msg->orientation.w
   );
-  imu_received_ = true;
 }
 
 void LaserScanMatcher::wheel_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
@@ -567,7 +569,7 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
     if (imu_received_) {
       double imu_yaw = tf2::getYaw(imu_orientation_);
       tf2::Quaternion imu_q;
-      imu_q.setRPY(0.0, 0.0, imu_yaw);
+      imu_q.setRPY(0.0, 0.0, optitrack_ ? imu_yaw + M_PI : imu_yaw);
       fusion_.setRotation(imu_q);
     }
 

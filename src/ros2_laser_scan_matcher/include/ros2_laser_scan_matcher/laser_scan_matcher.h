@@ -98,6 +98,7 @@ private:
   bool initialized_;
   bool publish_odom_;
   bool publish_tf_;
+  bool optitrack_;
 
   tf2::Transform f2b_;     // fixed-to-base tf (pose of base frame in fixed frame)
   tf2::Transform prev_f2b_; // previous fixed-to-base tf (for odometry calculation)
@@ -114,6 +115,7 @@ private:
 
   tf2::Quaternion imu_orientation_;
   bool imu_received_;
+  int imu_msg_count_;
 
   sm_params input_;
   sm_result output_;

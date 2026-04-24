@@ -58,6 +58,7 @@ def generate_launch_description():
             DeclareLaunchArgument("min_motion_th", default_value="0.1"),
             DeclareLaunchArgument("min_consecutive_observations", default_value="4"),
             DeclareLaunchArgument("config_file", default_value=""),
+            DeclareLaunchArgument("use_sim_time", default_value="false"),
             Node(
                 package="genz_icp",
                 executable="odometry_node",
@@ -84,6 +85,7 @@ def generate_launch_description():
                         "publish_odom_tf": LaunchConfiguration("publish_odom_tf"),
                         "visualize": LaunchConfiguration("visualize"),
                         "config_file": LaunchConfiguration("config_file"),
+                        "use_sim_time": LaunchConfiguration("use_sim_time"),
                     }
                 ],
             ),
