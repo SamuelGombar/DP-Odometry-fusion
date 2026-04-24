@@ -1,5 +1,5 @@
 BAG_NAME="Candy_4m"
-SUFFIX="_trash"
+SUFFIX="_0075_1_4"
 RECORD=false
 
 echo "Select odometry pipeline:"
@@ -59,7 +59,7 @@ elif [ "$ODOM_TYPE" = "genz_ekf" ]; then
 elif [ "$ODOM_TYPE" = "kin" ]; then
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag play /home/samuelg9/ros2_ws_host/recordings/bp/${BAG_NAME} --clock --topics /scan_merged /scan_merged_filtered /amrapi/sensor/velocity /hw_layer/imu/sensor/data; pkill -SIGINT -f 'ros2 bag record'; exec bash" &
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp wheel_odom_publisher --ros-args -p use_sim_time:=true -p is_kinematic:=true; exec bash" &
-  /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp scan_republisher --ros-args -p use_sim_time:=true -p is_kinematic:=true; exec bash" &
+  /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp scan_republisher --ros-args -p use_sim_time:=true; exec bash" &
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 launch kinematic_icp online_node.launch.py lidar_topic:=/scan_merged_c use_2d_lidar:=true; exec bash" &
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/wheel_odom -p path_topic:=/wheel_odom_path -p use_sim_time:=true; exec bash" &
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/kinematic_icp/lidar_odometry -p path_topic:=/kinematic_icp/lidar_odometry_path -p use_sim_time:=true; exec bash" &
@@ -85,11 +85,5 @@ else
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/ground_truth_wrapper -p path_topic:=/ground_truth_path; exec bash" &
 fi
 
-if [ "$ODOM_TYPE" = "csm" ]; then
-  sleep 5
-  ros2 service call /gt_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 5.0}"
-elif [ "$ODOM_TYPE" = "genz_ekf" ]; then
-  sleep 5
-elif [ "$ODOM_TYPE" = "kin" ]; then
-  ros2 service call /gt_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 1.0}"
-fi
+sleep 5
+ros2 service call /gt_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 5.0}"

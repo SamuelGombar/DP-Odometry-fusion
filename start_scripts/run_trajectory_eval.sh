@@ -24,16 +24,16 @@ if [ "$KOBUKI" = "true" ]; then
     --odom-topic ${ODOM_TOPIC} \
     --align \
     --kobuki \
-    --output-csv results.csv \
+    --output-csv /home/samuelg9/ros2_ws_host/results.csv \
     --interpolate-gt 0.5 
 else
   python3 /home/samuelg9/ros2_ws_host/trajectory_eval.py \
     /home/samuelg9/ros2_ws_host/recordings/output/${ODOM_TYPE}/${BAG_NAME} \
     --odom-topic ${ODOM_TOPIC} \
     --align \
-    --output-csv results.csv
+    --output-csv /home/samuelg9/ros2_ws_host/results.csv
 fi
-python3 /home/samuelg9/ros2_ws_host/plot_trajectory_eval.py results.csv \
+python3 /home/samuelg9/ros2_ws_host/plot_trajectory_eval.py /home/samuelg9/ros2_ws_host/results.csv \
   --separate \
   --match-lines
   # --rotate -10

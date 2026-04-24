@@ -9,8 +9,6 @@ class ScanRepublisher : public rclcpp::Node
 public:
   ScanRepublisher() : Node("scan_republisher")
   {
-    this->declare_parameter<bool>("is_kinematic", false);
-    is_kinematic = this->get_parameter("is_kinematic").as_bool();
     this->declare_parameter<bool>("kobuki", false);
     kobuki_ = this->get_parameter("kobuki").as_bool();
     pub_ = this->create_publisher<sensor_msgs::msg::LaserScan>("/scan_merged_c", 10);
@@ -56,7 +54,6 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr sub_;
   std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_broadcaster_;
-  bool is_kinematic;
   bool kobuki_ = false;
 };
 
