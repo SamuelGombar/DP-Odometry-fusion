@@ -17,6 +17,7 @@ import sys
 
 import matplotlib.pyplot as plt
 import matplotlib.collections as mc
+from matplotlib.legend_handler import HandlerTuple
 import numpy as np
 import pandas as pd
 
@@ -38,7 +39,7 @@ def rotate_coords(x: np.ndarray, y: np.ndarray, deg: float):
     return c * x - s * y, s * x + c * y
 
 
-def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool = False, match_lines: bool = False, rotate_deg: float = 0.0) -> None:
+def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool = False, match_lines: bool = False, rotate_deg: float = 0.0, traj_title: str = "Trajectories (error coloured)", est_label: str = "Estimated (colour = error)") -> None:
     matched = df[df["error_m"].notna()].reset_index(drop=True)
     t = matched["timestamp_s"].values
     t_rel = t - t[0]  # seconds from start
@@ -86,7 +87,7 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
     ax = axes[0]
     # Sort GT by its own timestamps so the line follows the actual GT path order
     gt_line = df[df["timestamp_gt_s"].notna()].drop_duplicates(subset="timestamp_gt_s").sort_values("timestamp_gt_s")
-    ax.plot(gt_line["x_gt"], gt_line["y_gt"], color=plt.cm.plasma(0.0), linewidth=3.0, label="Ground truth", zorder=2)
+    gt_handle, = ax.plot(gt_line["x_gt"], gt_line["y_gt"], color=plt.cm.plasma(0.0), linewidth=3.0, zorder=2)
     if match_lines:
         segments = np.stack(
             [np.column_stack([matched["x_est"], matched["y_est"]]),
@@ -104,15 +105,25 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
         matched["x_est"], matched["y_est"],
         c=matched["error_m"], cmap="plasma", norm=norm,
         s=4, linewidths=0, zorder=4,
-        label="Estimated (colour = error)",
     )
     cbar = fig.colorbar(sc, ax=ax, fraction=0.046, pad=0.04)
     cbar.set_label("Error (m)", fontsize=21)
     cbar.ax.tick_params(labelsize=19)
     ax.set_xlabel("x (m)", fontsize=26)
     ax.set_ylabel("y (m)", fontsize=26)
-    ax.set_title("Trajectories (error coloured)", fontsize=24)
-    ax.legend(fontsize=15, markerscale=3)
+    ax.set_title(traj_title, fontsize=24)
+    n_dots = 6
+    est_dots = tuple(
+        plt.Line2D([], [], marker="o", linestyle="None", markersize=7,
+                   color=plt.cm.plasma(i / (n_dots - 1)))
+        for i in range(n_dots)
+    )
+    ax.legend(
+        handles=[gt_handle, est_dots],
+        labels=["Referenčná trajektória", est_label],
+        handler_map={tuple: HandlerTuple(ndivide=None, pad=0.2)},
+        fontsize=15,
+    )
     ax.set_aspect("equal")
     ax.grid(True, linewidth=0.4)
     ax.tick_params(labelsize=24)
@@ -185,6 +196,18 @@ def main() -> None:
         default=0.0,
         help="Rotate both trajectories counter-clockwise by this many degrees before plotting.",
     )
+    parser.add_argument(
+        "--traj-title",
+        metavar="TITLE",
+        default="Trajectories (error coloured)",
+        help="Title for the trajectory subplot (default: 'Trajectories (error coloured)').",
+    )
+    parser.add_argument(
+        "--est-label",
+        metavar="LABEL",
+        default="Estimated (colour = error)",
+        help="Legend label for the estimated trajectory (default: 'Estimated (colour = error)').",
+    )
     args = parser.parse_args()
 
     csv_path = os.path.abspath(args.csv_path)
@@ -193,7 +216,7 @@ def main() -> None:
         sys.exit(1)
 
     df = load_csv(csv_path)
-    plot(df, csv_path, args.save, separate=args.separate, match_lines=args.match_lines, rotate_deg=args.rotate)
+    plot(df, csv_path, args.save, separate=args.separate, match_lines=args.match_lines, rotate_deg=args.rotate, traj_title=args.traj_title, est_label=args.est_label)
 
 
 if __name__ == "__main__":
