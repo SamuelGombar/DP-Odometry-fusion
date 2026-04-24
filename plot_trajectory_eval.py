@@ -30,7 +30,7 @@ def load_csv(path: str) -> pd.DataFrame:
     return df
 
 
-def plot(df: pd.DataFrame, csv_path: str, save_path: str | None) -> None:
+def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool = False) -> None:
     t = df["timestamp_s"].values
     t_rel = t - t[0]  # seconds from start
 
@@ -39,12 +39,25 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None) -> None:
     max_e = float(df["error_m"].max())
     n = len(df)
 
-    fig, axes = plt.subplots(1, 3, figsize=(16, 5))
-    fig.suptitle(
+    suptitle = (
         f"{os.path.basename(csv_path)}  —  ATE RMSE: {rmse:.4f} m  |  "
-        f"Mean: {mean_e:.4f} m  |  Max: {max_e:.4f} m  |  n={n}",
-        fontsize=11,
+        f"Mean: {mean_e:.4f} m  |  Max: {max_e:.4f} m  |  n={n}"
     )
+
+    if separate:
+        figs_axes = [
+            plt.subplots(1, 1, figsize=(8, 7)),
+            plt.subplots(1, 1, figsize=(8, 7)),
+            plt.subplots(1, 1, figsize=(8, 7)),
+        ]
+        axes = [fa[1] for fa in figs_axes]
+        for fa in figs_axes:
+            fa[0].suptitle(suptitle, fontsize=10)
+        fig = figs_axes[0][0]  # used only for colorbar reference below
+    else:
+        fig, _axes = plt.subplots(1, 3, figsize=(16, 5))
+        axes = list(_axes)
+        fig.suptitle(suptitle, fontsize=11)
 
     # --- 1. Trajectories (estimated coloured by error magnitude) ---
     ax = axes[0]
@@ -90,8 +103,16 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None) -> None:
     plt.tight_layout()
 
     if save_path:
-        plt.savefig(save_path, dpi=150, bbox_inches="tight")
-        print(f"Saved to: {os.path.abspath(save_path)}")
+        if separate:
+            base, ext = os.path.splitext(save_path)
+            ext = ext or ".png"
+            for i, (f, _) in enumerate(figs_axes):
+                out = f"{base}_{i+1}{ext}"
+                f.savefig(out, dpi=150, bbox_inches="tight")
+                print(f"Saved to: {os.path.abspath(out)}")
+        else:
+            fig.savefig(save_path, dpi=150, bbox_inches="tight")
+            print(f"Saved to: {os.path.abspath(save_path)}")
     else:
         plt.show()
 
@@ -101,6 +122,11 @@ def main() -> None:
         description="Plot trajectory evaluation CSV produced by trajectory_eval.py"
     )
     parser.add_argument("csv_path", help="Path to the results CSV file")
+    parser.add_argument(
+        "--separate",
+        action="store_true",
+        help="Plot each graph in its own larger window instead of a single combined figure.",
+    )
     parser.add_argument(
         "--save",
         metavar="OUTPUT_PNG",
@@ -114,7 +140,7 @@ def main() -> None:
         sys.exit(1)
 
     df = load_csv(csv_path)
-    plot(df, csv_path, args.save)
+    plot(df, csv_path, args.save, separate=args.separate)
 
 
 if __name__ == "__main__":

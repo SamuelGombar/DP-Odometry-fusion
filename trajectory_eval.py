@@ -35,12 +35,14 @@ def _detect_storage_id(bag_path: str) -> str:
 
 
 def read_poses_from_bag(
-    bag_path: str, topics: list[str]
+    bag_path: str, topics: list[str], pose_stamped_topics: set[str] | None = None
 ) -> dict[str, list[tuple[int, float, float]]]:
     """
     Open the bag once, read all messages on the given topics, and return:
         { topic: [(timestamp_ns, x, y), ...] }
     timestamp_ns is taken from msg.header.stamp.
+    Topics in pose_stamped_topics are read as geometry_msgs/PoseStamped
+    (msg.pose.position) rather than nav_msgs/Odometry (msg.pose.pose.position).
     """
     import rosbag2_py
     from rclpy.serialization import deserialize_message
@@ -77,6 +79,9 @@ def read_poses_from_bag(
     reader.set_filter(storage_filter)
 
     results: dict[str, list[tuple[int, float, float]]] = {t: [] for t in topics}
+    pose_stamped_topics = pose_stamped_topics or set()
+    # Per-topic state for OptiTrack origin subtraction
+    _optitrack_first: dict[str, tuple[float, float, float]] = {}
 
     while reader.has_next():
         topic, data, _ = reader.read_next()
@@ -86,8 +91,30 @@ def read_poses_from_bag(
         stamp_ns = (
             msg.header.stamp.sec * 1_000_000_000 + msg.header.stamp.nanosec
         )
-        x = msg.pose.pose.position.x
-        y = msg.pose.pose.position.y
+        if topic in pose_stamped_topics:
+            # OptiTrack Y-up: x→-x, z→y, then subtract first pose and rotate
+            import math
+            raw_x = -msg.pose.position.x
+            raw_y =  msg.pose.position.z
+            raw_yaw = math.atan2(
+                2.0 * (msg.pose.orientation.w * msg.pose.orientation.z +
+                       msg.pose.orientation.x * msg.pose.orientation.y),
+                1.0 - 2.0 * (msg.pose.orientation.y ** 2 +
+                              msg.pose.orientation.z ** 2)
+            )
+            if topic not in _optitrack_first:
+                _optitrack_first[topic] = (raw_x, raw_y, raw_yaw)
+            ox, oy, oyaw = _optitrack_first[topic]
+            dx = raw_x - ox
+            dy = raw_y - oy
+            cx =  math.cos(oyaw) * dx + math.sin(oyaw) * dy
+            cy = -math.sin(oyaw) * dx + math.cos(oyaw) * dy
+            # Additional 90° CCW rotation (matches odom_to_path)
+            x = -cy
+            y =  cx
+        else:
+            x = msg.pose.pose.position.x
+            y = msg.pose.pose.position.y
         results[topic].append((stamp_ns, x, y))
 
     return results
@@ -213,6 +240,41 @@ def match_temporal(
 # ATE computation
 # ---------------------------------------------------------------------------
 
+def align_se2(
+    rows: list[tuple[int, float, float, float, float, float]],
+) -> list[tuple[int, float, float, float, float, float]]:
+    """
+    Find the optimal SE(2) transform (rotation + translation, no scale) that
+    maps estimated poses onto GT poses using SVD (Umeyama method), then
+    recompute errors with the aligned estimated poses.
+    Returns new rows with updated x_est, y_est, error_m.
+    """
+    est = np.array([[r[1], r[2]] for r in rows])
+    gt  = np.array([[r[3], r[4]] for r in rows])
+
+    mu_est = est.mean(axis=0)
+    mu_gt  = gt.mean(axis=0)
+
+    est_c = est - mu_est
+    gt_c  = gt  - mu_gt
+
+    H = est_c.T @ gt_c
+    U, _, Vt = np.linalg.svd(H)
+    # Correct reflection
+    d = np.linalg.det(Vt.T @ U.T)
+    D = np.diag([1.0, d])
+    R = Vt.T @ D @ U.T
+    t = mu_gt - R @ mu_est
+
+    aligned = (R @ est.T).T + t
+
+    new_rows = []
+    for i, r in enumerate(rows):
+        ax, ay = float(aligned[i, 0]), float(aligned[i, 1])
+        err = float(np.hypot(ax - r[3], ay - r[4]))
+        new_rows.append((r[0], ax, ay, r[3], r[4], err))
+    return new_rows
+
 def compute_ate(errors: list[float]) -> tuple[float, float, float, float]:
     e = np.array(errors)
     return (
@@ -248,6 +310,14 @@ def main() -> None:
         help="Ground truth topic (nav_msgs/Odometry). Default: /ground_truth_wrapper",
     )
     parser.add_argument(
+        "--kobuki",
+        action="store_true",
+        help=(
+            "Use Kobuki/OptiTrack mode: GT topic is /vrpn_mocap/RigidBody_002/pose "
+            "(geometry_msgs/PoseStamped). Overrides --gt-topic default."
+        ),
+    )
+    parser.add_argument(
         "--mode",
         choices=["spatial", "temporal"],
         default="spatial",
@@ -264,6 +334,14 @@ def main() -> None:
             "[spatial mode only] Each GT pose is matched at most once. "
             "Prevents trajectory loops or dense clusters from pulling many estimated "
             "poses to the same GT point."
+        ),
+    )
+    parser.add_argument(
+        "--align",
+        action="store_true",
+        help=(
+            "Align estimated trajectory to GT using an optimal SE(2) transform "
+            "(rotation + translation via SVD) before computing ATE."
         ),
     )
     parser.add_argument(
@@ -285,6 +363,13 @@ def main() -> None:
         print(f"ERROR: bag path not found or not a directory: {bag_path}", file=sys.stderr)
         sys.exit(1)
 
+    if args.kobuki and args.gt_topic == "/ground_truth_wrapper":
+        args.gt_topic = "/vrpn_mocap/RigidBody_002/pose"
+
+    pose_stamped_topics: set[str] = set()
+    if args.kobuki:
+        pose_stamped_topics.add(args.gt_topic)
+
     # --- Print header ---
     print()
     print(f"Bag        : {bag_path}")
@@ -298,7 +383,7 @@ def main() -> None:
 
     # --- Read bag (single pass) ---
     print("Reading bag...")
-    poses = read_poses_from_bag(bag_path, [args.odom_topic, args.gt_topic])
+    poses = read_poses_from_bag(bag_path, [args.odom_topic, args.gt_topic], pose_stamped_topics)
     est_poses = poses[args.odom_topic]
     gt_poses = poses[args.gt_topic]
 
@@ -326,6 +411,10 @@ def main() -> None:
             file=sys.stderr,
         )
         sys.exit(1)
+
+    if args.align:
+        print("Aligning trajectories (SE(2) / SVD)...")
+        rows = align_se2(rows)
 
     # --- ATE ---
     errors = [r[5] for r in rows]
