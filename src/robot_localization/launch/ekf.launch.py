@@ -18,18 +18,23 @@ from ament_index_python.packages import get_package_share_directory
 import launch_ros.actions
 import os
 import yaml
-from launch.substitutions import EnvironmentVariable
+from launch.substitutions import EnvironmentVariable, LaunchConfiguration
 import pathlib
 import launch.actions
 from launch.actions import DeclareLaunchArgument
 
 def generate_launch_description():
+    use_sim_time = LaunchConfiguration('use_sim_time', default='false')
     return LaunchDescription([
+        DeclareLaunchArgument('use_sim_time', default_value='false'),
         launch_ros.actions.Node(
             package='robot_localization',
             executable='ekf_node',
             name='ekf_filter_node',
             output='screen',
-            parameters=[os.path.join(get_package_share_directory("robot_localization"), 'params', 'ekf.yaml')],
+            parameters=[
+                os.path.join(get_package_share_directory("robot_localization"), 'params', 'ekf.yaml'),
+                {'use_sim_time': use_sim_time},
+            ],
            ),
 ])

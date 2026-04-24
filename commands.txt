@@ -3,3 +3,5 @@ rosbags-convert --src <input_bag>.bag --dst <output_bag>
 ros2 bag play <ros2_bag>
 ros2 run tf2_tools view_frames
 ros2 bag play Candy_7m --exclude-topics "/hw_layer/addon_mission_state"
+
+ros2 launch vrpn_mocap client.launch.yaml server:=192.168.1.101

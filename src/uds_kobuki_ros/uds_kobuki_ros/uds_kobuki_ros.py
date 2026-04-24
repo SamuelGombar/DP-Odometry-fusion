@@ -66,8 +66,8 @@ class Kobuki(Node):
         self.lidar_sock.close()
 
     def setup_parameters(self):
-        self.declare_parameter('ip_address', '127.0.0.1')
-        # self.declare_parameter('ip_address', '192.168.1.16')
+        # self.declare_parameter('ip_address', '127.0.0.1')
+        self.declare_parameter('ip_address', '192.168.1.16')
         self.declare_parameter('robot_upd_port_up', 5300)
         self.declare_parameter('robot_upd_port_down', 53000)
         self.declare_parameter('lidar_upd_port_up', 5299)
@@ -228,7 +228,7 @@ class Kobuki(Node):
 
         # self.get_logger().info(f'GyroAngleRate: {self.robot_data.GyroAngleRate}')
         self.odom_pub.publish(msg)
-        self.odom_to_base_link_tf(msg)
+        # self.odom_to_base_link_tf(msg)
 
     def publish_laser_scan(self, stamp: Time):
         msg = LaserScan()
@@ -337,8 +337,8 @@ class Kobuki(Node):
         t.transform.rotation.z = msg.pose.pose.orientation.z
         t.transform.rotation.w = msg.pose.pose.orientation.w
 
-        if self.is_kinematic:
-            self.tf_broadcaster.sendTransform(t)
+        # if self.is_kinematic:
+        self.tf_broadcaster.sendTransform(t)
 
 def main(args=None):
     rclpy.init(args=args)

@@ -33,7 +33,8 @@ public:
       "/scan_merged", 10,
       [this](const sensor_msgs::msg::LaserScan::SharedPtr msg) {
         // rclcpp::Time stamp = is_kinematic ? rclcpp::Time(msg->header.stamp) : this->now();
-        rclcpp::Time stamp = this->now();
+        // rclcpp::Time stamp = this->now();
+        rclcpp::Time stamp = rclcpp::Time(msg->header.stamp);
 
         geometry_msgs::msg::TransformStamped map_to_odom;
         map_to_odom.header.stamp = stamp;

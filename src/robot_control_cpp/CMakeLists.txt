@@ -74,7 +74,10 @@ ament_target_dependencies(wheel_odom_publisher
 add_executable(odom_to_path src/odom_to_path.cpp)
 ament_target_dependencies(odom_to_path
   rclcpp
-  nav_msgs)
+  nav_msgs
+  geometry_msgs
+  tf2
+  tf2_geometry_msgs)
 
 # convert hw_layer IMU to standard sensor_msgs/Imu
 add_executable(imu_publisher src/imu_publisher.cpp)
@@ -101,6 +104,12 @@ ament_target_dependencies(gt_wrapper
   tf2
   tf2_geometry_msgs)
 
+add_executable(tf_publisher src/tf_publisher.cpp)
+ament_target_dependencies(tf_publisher
+  rclcpp
+  tf2_ros
+  geometry_msgs)
+
 install(TARGETS 
   teleop
   pid_control
@@ -112,6 +121,7 @@ install(TARGETS
   imu_publisher
   groundtruth_republisher
   gt_wrapper
+  tf_publisher
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
