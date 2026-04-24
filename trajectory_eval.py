@@ -214,7 +214,7 @@ def match_spatial(
             else:
                 dist, ridx = tree_real.query([ep[1], ep[2]])
                 gp = gt_poses[real_indices[int(ridx)]]
-            rows.append((ep[0], ep[1], ep[2], gp[1], gp[2], float(dist)))
+            rows.append((ep[0], ep[1], ep[2], gp[0], gp[1], gp[2], float(dist)))
         return rows
 
     # Deduplicate: each GT pose matched at most once, iterating over estimated poses.
@@ -242,7 +242,7 @@ def match_spatial(
             if global_idx not in used:
                 used.add(global_idx)
                 gp = gt_poses[global_idx]
-                rows.append((ep[0], ep[1], ep[2], gp[1], gp[2], float(dist)))
+                rows.append((ep[0], ep[1], ep[2], gp[0], gp[1], gp[2], float(dist)))
                 matched = True
                 break
 
@@ -251,7 +251,7 @@ def match_spatial(
             dist0, idx0 = active_tree.query([ep[1], ep[2]], k=1)
             global_idx0 = active_idx_map[int(idx0)]
             gp = gt_poses[global_idx0]
-            rows.append((ep[0], ep[1], ep[2], gp[1], gp[2], float(dist0)))
+            rows.append((ep[0], ep[1], ep[2], gp[0], gp[1], gp[2], float(dist0)))
             fallback_count += 1
 
     if fallback_count:
@@ -302,7 +302,7 @@ def match_temporal(
 
         gp = gt_sorted[best]
         error = float(np.hypot(ep[1] - gp[1], ep[2] - gp[2]))
-        rows.append((ep[0], ep[1], ep[2], gp[1], gp[2], error))
+        rows.append((ep[0], ep[1], ep[2], gp[0], gp[1], gp[2], error))
 
     if dropped:
         print(
@@ -326,7 +326,7 @@ def compute_se2_transform(
     using SVD (Umeyama method). Returns (R, t).
     """
     est = np.array([[r[1], r[2]] for r in rows])
-    gt  = np.array([[r[3], r[4]] for r in rows])
+    gt  = np.array([[r[4], r[5]] for r in rows])
 
     mu_est = est.mean(axis=0)
     mu_gt  = gt.mean(axis=0)
@@ -373,8 +373,8 @@ def align_se2(
     new_rows = []
     for i, r in enumerate(rows):
         ax, ay = float(aligned[i, 0]), float(aligned[i, 1])
-        err = float(np.hypot(ax - r[3], ay - r[4]))
-        new_rows.append((r[0], ax, ay, r[3], r[4], err))
+        err = float(np.hypot(ax - r[4], ay - r[5]))
+        new_rows.append((r[0], ax, ay, r[3], r[4], r[5], err))
     return new_rows
 
 def compute_ate(errors: list[float]) -> tuple[float, float, float, float]:
@@ -467,7 +467,7 @@ def main() -> None:
     parser.add_argument(
         "--output-csv",
         metavar="CSV_PATH",
-        help="Write per-pose results to this CSV file (timestamp_s, x_est, y_est, x_gt, y_gt, error_m)",
+        help="Write per-pose results to this CSV file (timestamp_s, x_est, y_est, timestamp_gt_s, x_gt, y_gt, error_m)",
     )
     args = parser.parse_args()
 
@@ -519,21 +519,31 @@ def main() -> None:
 
     # --- Match ---
     if args.align and args.mode == "spatial":
-        # Two-pass: pre-align estimated poses before spatial pairing so that
-        # nearest-neighbour operates in a consistent coordinate frame.
-        print("Matching poses (pass 1 — pre-alignment)...")
-        rows_pass1 = match_spatial(est_poses, gt_poses, args.deduplicate, gap_ranges)
-        if not rows_pass1:
-            print(
-                "ERROR: No pose pairs matched in pass 1. Check topic names.",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-        print("Aligning estimated trajectory (SE(2) / SVD)...")
-        R, t = compute_se2_transform(rows_pass1)
-        est_poses = apply_se2_transform(est_poses, R, t)
-        print("Matching poses (pass 2 — on aligned trajectory)...")
-        rows = match_spatial(est_poses, gt_poses, args.deduplicate, gap_ranges)
+        # Iterative ICP-style alignment: match → SE(2) → apply → repeat until convergence.
+        MAX_ITER = 50
+        CONV_THRESH = 1e-6  # metres RMSE change
+        prev_rmse = float("inf")
+        rows = []
+        print("Aligning estimated trajectory (iterative SE(2) / SVD)...")
+        for iteration in range(1, MAX_ITER + 1):
+            rows = match_spatial(est_poses, gt_poses, args.deduplicate, gap_ranges)
+            if not rows:
+                print(
+                    "ERROR: No pose pairs matched. Check topic names.",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+            errors_iter = [r[6] for r in rows]
+            rmse_iter = float(np.sqrt(np.mean(np.array(errors_iter) ** 2)))
+            print(f"  iter {iteration:2d}  RMSE = {rmse_iter:.6f} m")
+            if abs(prev_rmse - rmse_iter) < CONV_THRESH:
+                print(f"  Converged after {iteration} iteration(s).")
+                break
+            prev_rmse = rmse_iter
+            R, t = compute_se2_transform(rows)
+            est_poses = apply_se2_transform(est_poses, R, t)
+        else:
+            print(f"  Reached max iterations ({MAX_ITER}).")
     else:
         print("Matching poses...")
         if args.mode == "spatial":
@@ -554,7 +564,7 @@ def main() -> None:
         sys.exit(1)
 
     # --- ATE ---
-    errors = [r[5] for r in rows]
+    errors = [r[6] for r in rows]
     rmse, mean, std, max_e = compute_ate(errors)
 
     print()
@@ -573,16 +583,20 @@ def main() -> None:
         out_path = os.path.abspath(args.output_csv)
         with open(out_path, "w", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(["timestamp_s", "x_est", "y_est", "x_gt", "y_gt", "error_m"])
+            writer.writerow(["timestamp_s", "x_est", "y_est", "timestamp_gt_s", "x_gt", "y_gt", "error_m"])
             for r in rows:
                 writer.writerow([
                     f"{r[0] / 1e9:.9f}",
                     f"{r[1]:.6f}",
                     f"{r[2]:.6f}",
-                    f"{r[3]:.6f}",
+                    f"{r[3] / 1e9:.9f}",
                     f"{r[4]:.6f}",
                     f"{r[5]:.6f}",
+                    f"{r[6]:.6f}",
                 ])
+            # Write all GT poses (NaN for est columns) so the plotter can draw the full GT trajectory
+            for gp in gt_poses:
+                writer.writerow(["", "", "", f"{gp[0] / 1e9:.9f}", f"{gp[1]:.6f}", f"{gp[2]:.6f}", ""])
         print(f"\nPer-pose results written to: {out_path}")
 
 

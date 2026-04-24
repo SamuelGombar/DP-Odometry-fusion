@@ -23,7 +23,7 @@ import pandas as pd
 
 def load_csv(path: str) -> pd.DataFrame:
     df = pd.read_csv(path)
-    expected = {"timestamp_s", "x_est", "y_est", "x_gt", "y_gt", "error_m"}
+    expected = {"timestamp_s", "x_est", "y_est", "timestamp_gt_s", "x_gt", "y_gt", "error_m"}
     missing = expected - set(df.columns)
     if missing:
         print(f"ERROR: CSV is missing columns: {missing}", file=sys.stderr)
@@ -31,14 +31,22 @@ def load_csv(path: str) -> pd.DataFrame:
     return df
 
 
-def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool = False, match_lines: bool = False) -> None:
-    t = df["timestamp_s"].values
+def rotate_coords(x: np.ndarray, y: np.ndarray, deg: float):
+    """Rotate 2-D points by *deg* degrees counter-clockwise."""
+    rad = np.deg2rad(deg)
+    c, s = np.cos(rad), np.sin(rad)
+    return c * x - s * y, s * x + c * y
+
+
+def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool = False, match_lines: bool = False, rotate_deg: float = 0.0) -> None:
+    matched = df[df["error_m"].notna()].reset_index(drop=True)
+    t = matched["timestamp_s"].values
     t_rel = t - t[0]  # seconds from start
 
-    rmse = float(np.sqrt(np.mean(df["error_m"] ** 2)))
-    mean_e = float(df["error_m"].mean())
-    max_e = float(df["error_m"].max())
-    n = len(df)
+    rmse = float(np.sqrt(np.mean(matched["error_m"] ** 2)))
+    mean_e = float(matched["error_m"].mean())
+    max_e = float(matched["error_m"].max())
+    n = len(matched)
 
     suptitle = (
         f"{os.path.basename(csv_path)}  —  ATE RMSE: {rmse:.4f} m  |  "
@@ -60,19 +68,35 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
         axes = list(_axes)
         fig.suptitle(suptitle, fontsize=11)
 
+    # --- apply optional rotation ---
+    if rotate_deg != 0.0:
+        matched = matched.copy()
+        matched["x_est"], matched["y_est"] = rotate_coords(
+            matched["x_est"].values, matched["y_est"].values, rotate_deg
+        )
+        matched["x_gt"], matched["y_gt"] = rotate_coords(
+            matched["x_gt"].values, matched["y_gt"].values, rotate_deg
+        )
+        df = df.copy()
+        df["x_gt"], df["y_gt"] = rotate_coords(
+            df["x_gt"].values, df["y_gt"].values, rotate_deg
+        )
+
     # --- 1. Trajectories (estimated coloured by error magnitude) ---
     ax = axes[0]
-    ax.plot(df["x_gt"], df["y_gt"], color="tab:green", linewidth=1.5, label="Ground truth", zorder=2)
+    # Sort GT by its own timestamps so the line follows the actual GT path order
+    gt_line = df[df["timestamp_gt_s"].notna()].drop_duplicates(subset="timestamp_gt_s").sort_values("timestamp_gt_s")
+    ax.plot(gt_line["x_gt"], gt_line["y_gt"], color="tab:green", linewidth=1.5, label="Ground truth", zorder=2)
     if match_lines:
         segments = np.stack(
-            [np.column_stack([df["x_est"], df["y_est"]]),
-             np.column_stack([df["x_gt"],  df["y_gt"]])],
+            [np.column_stack([matched["x_est"], matched["y_est"]]),
+             np.column_stack([matched["x_gt"],  matched["y_gt"]])],
             axis=1,
         )
         ax.add_collection(mc.LineCollection(segments, colors="gray", linewidths=0.4, alpha=0.4, zorder=1))
     sc = ax.scatter(
-        df["x_est"], df["y_est"],
-        c=df["error_m"], cmap="RdYlGn_r",
+        matched["x_est"], matched["y_est"],
+        c=matched["error_m"], cmap="RdYlGn_r",
         s=4, linewidths=0, zorder=3,
         label="Estimated (colour = error)",
     )
@@ -88,7 +112,7 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
 
     # --- 2. Per-pose error over time ---
     ax = axes[1]
-    ax.plot(t_rel, df["error_m"], color="tab:orange", linewidth=0.8)
+    ax.plot(t_rel, matched["error_m"], color="tab:orange", linewidth=0.8)
     ax.axhline(rmse, color="tab:red", linestyle="--", linewidth=1.2, label=f"RMSE {rmse:.4f} m")
     ax.axhline(mean_e, color="tab:purple", linestyle=":", linewidth=1.2, label=f"Mean {mean_e:.4f} m")
     ax.set_xlabel("Time (s)")
@@ -99,7 +123,7 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
 
     # --- 3. Error distribution ---
     ax = axes[2]
-    ax.hist(df["error_m"], bins=40, color="tab:blue", alpha=0.75, edgecolor="white", linewidth=0.4)
+    ax.hist(matched["error_m"], bins=40, color="tab:blue", alpha=0.75, edgecolor="white", linewidth=0.4)
     ax.axvline(rmse, color="tab:red", linestyle="--", linewidth=1.2, label=f"RMSE {rmse:.4f} m")
     ax.axvline(mean_e, color="tab:purple", linestyle=":", linewidth=1.2, label=f"Mean {mean_e:.4f} m")
     ax.set_xlabel("Error (m)")
@@ -145,6 +169,13 @@ def main() -> None:
         action="store_true",
         help="Draw gray lines connecting each matched estimated/GT pose pair in the trajectory plot.",
     )
+    parser.add_argument(
+        "--rotate",
+        metavar="DEG",
+        type=float,
+        default=0.0,
+        help="Rotate both trajectories counter-clockwise by this many degrees before plotting.",
+    )
     args = parser.parse_args()
 
     csv_path = os.path.abspath(args.csv_path)
@@ -153,7 +184,7 @@ def main() -> None:
         sys.exit(1)
 
     df = load_csv(csv_path)
-    plot(df, csv_path, args.save, separate=args.separate, match_lines=args.match_lines)
+    plot(df, csv_path, args.save, separate=args.separate, match_lines=args.match_lines, rotate_deg=args.rotate)
 
 
 if __name__ == "__main__":
