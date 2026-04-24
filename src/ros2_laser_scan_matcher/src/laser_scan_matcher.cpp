@@ -536,7 +536,7 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
 
     fusion_ = fusion_ * lidar_pose_diff;
     double ratio = lidar_sum_poses_dist/wheel_sum_poses_dist;
-    static double corr_threshold = 0.20;
+    static double corr_threshold = 0.3;
     // std::cout << ratio << std::endl;
     if ((ratio < corr_threshold)) {
       // if (wheel_pose_diff.getOrigin().length() > 0.01) {

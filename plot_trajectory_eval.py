@@ -55,9 +55,9 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
 
     if separate:
         figs_axes = [
-            plt.subplots(1, 1, figsize=(8, 7)),
-            plt.subplots(1, 1, figsize=(8, 7)),
-            plt.subplots(1, 1, figsize=(8, 7)),
+            plt.subplots(1, 1, figsize=(14, 8)),
+            plt.subplots(1, 1, figsize=(14, 8)),
+            plt.subplots(1, 1, figsize=(14, 8)),
         ]
         axes = [fa[1] for fa in figs_axes]
         for fa in figs_axes:
@@ -86,7 +86,7 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
     ax = axes[0]
     # Sort GT by its own timestamps so the line follows the actual GT path order
     gt_line = df[df["timestamp_gt_s"].notna()].drop_duplicates(subset="timestamp_gt_s").sort_values("timestamp_gt_s")
-    ax.plot(gt_line["x_gt"], gt_line["y_gt"], color="tab:green", linewidth=1.5, label="Ground truth", zorder=2)
+    ax.plot(gt_line["x_gt"], gt_line["y_gt"], color=plt.cm.plasma(0.0), linewidth=3.0, label="Ground truth", zorder=2)
     if match_lines:
         segments = np.stack(
             [np.column_stack([matched["x_est"], matched["y_est"]]),
@@ -94,43 +94,52 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
             axis=1,
         )
         ax.add_collection(mc.LineCollection(segments, colors="gray", linewidths=0.4, alpha=0.4, zorder=1))
+    est_pts = np.column_stack([matched["x_est"].values, matched["y_est"].values])
+    est_segments = np.stack([est_pts[:-1], est_pts[1:]], axis=1)
+    norm = plt.Normalize(matched["error_m"].min(), matched["error_m"].max())
+    est_lc = mc.LineCollection(est_segments, cmap="plasma", norm=norm, linewidths=3.0, zorder=3)
+    est_lc.set_array((matched["error_m"].values[:-1] + matched["error_m"].values[1:]) / 2)
+    ax.add_collection(est_lc)
     sc = ax.scatter(
         matched["x_est"], matched["y_est"],
-        c=matched["error_m"], cmap="RdYlGn_r",
-        s=4, linewidths=0, zorder=3,
+        c=matched["error_m"], cmap="plasma", norm=norm,
+        s=4, linewidths=0, zorder=4,
         label="Estimated (colour = error)",
     )
     cbar = fig.colorbar(sc, ax=ax, fraction=0.046, pad=0.04)
-    cbar.set_label("Error (m)", fontsize=8)
-    cbar.ax.tick_params(labelsize=7)
-    ax.set_xlabel("x (m)")
-    ax.set_ylabel("y (m)")
-    ax.set_title("Trajectories (error coloured)")
-    ax.legend(fontsize=8, markerscale=3)
+    cbar.set_label("Error (m)", fontsize=21)
+    cbar.ax.tick_params(labelsize=19)
+    ax.set_xlabel("x (m)", fontsize=26)
+    ax.set_ylabel("y (m)", fontsize=26)
+    ax.set_title("Trajectories (error coloured)", fontsize=24)
+    ax.legend(fontsize=15, markerscale=3)
     ax.set_aspect("equal")
     ax.grid(True, linewidth=0.4)
+    ax.tick_params(labelsize=24)
 
     # --- 2. Per-pose error over time ---
     ax = axes[1]
-    ax.plot(t_rel, matched["error_m"], color="tab:orange", linewidth=0.8)
+    ax.plot(t_rel, matched["error_m"], color="tab:orange", linewidth=1.8)
     ax.axhline(rmse, color="tab:red", linestyle="--", linewidth=1.2, label=f"RMSE {rmse:.4f} m")
     ax.axhline(mean_e, color="tab:purple", linestyle=":", linewidth=1.2, label=f"Mean {mean_e:.4f} m")
-    ax.set_xlabel("Time (s)")
-    ax.set_ylabel("Error (m)")
-    ax.set_title("Per-pose Error over Time")
-    ax.legend(fontsize=9)
+    ax.set_xlabel("Time (s)", fontsize=26)
+    ax.set_ylabel("Error (m)", fontsize=26)
+    ax.set_title("Per-pose Error over Time", fontsize=24)
+    ax.legend(fontsize=15)
     ax.grid(True, linewidth=0.4)
+    ax.tick_params(labelsize=24)
 
     # --- 3. Error distribution ---
     ax = axes[2]
     ax.hist(matched["error_m"], bins=40, color="tab:blue", alpha=0.75, edgecolor="white", linewidth=0.4)
     ax.axvline(rmse, color="tab:red", linestyle="--", linewidth=1.2, label=f"RMSE {rmse:.4f} m")
     ax.axvline(mean_e, color="tab:purple", linestyle=":", linewidth=1.2, label=f"Mean {mean_e:.4f} m")
-    ax.set_xlabel("Error (m)")
-    ax.set_ylabel("Count")
-    ax.set_title("Error Distribution")
-    ax.legend(fontsize=9)
+    ax.set_xlabel("Error (m)", fontsize=26)
+    ax.set_ylabel("Count", fontsize=26)
+    ax.set_title("Error Distribution", fontsize=24)
+    ax.legend(fontsize=15)
     ax.grid(True, linewidth=0.4, axis="y")
+    ax.tick_params(labelsize=24)
 
     plt.tight_layout()
 

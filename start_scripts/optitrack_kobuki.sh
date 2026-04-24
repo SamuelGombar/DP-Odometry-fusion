@@ -1,5 +1,5 @@
-BAG_NAME="optitrack_4"
-SUFFIX="_2"
+BAG_NAME="optitrack_6"
+SUFFIX="_5_01"
 RECORD=true
 
 echo "Select odometry pipeline:"
@@ -48,7 +48,7 @@ elif [ "$ODOM_TYPE" = "genz_ekf" ]; then
   /usr/bin/gnome-terminal --tab -- bash -c "sleep 5 && ros2 bag play /home/samuelg9/ros2_ws_host/recordings/optitrack/${BAG_NAME} --exclude-topics /tf /tf_static --remap __node:=compr_player --remap /scan:=/scan_c --clock; pkill -SIGINT -f 'ros2 bag record'; exec bash" &
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp scan_republisher --ros-args -r /scan_merged:=/scan_c -r /scan_merged_c:=/scan -p use_sim_time:=true; exec bash" &
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp scan_to_pc --ros-args -p input_topic:=/scan -p use_sim_time:=true; exec bash" &
-  /usr/bin/gnome-terminal --tab -- bash -c "ros2 launch genz_icp odometry.launch.py topic:=/pointcloud_topic min_consecutive_observations:=8 voxel_size:=0.2; exec bash" &
+  /usr/bin/gnome-terminal --tab -- bash -c "ros2 launch genz_icp odometry.launch.py topic:=/pointcloud_topic min_consecutive_observations:=5 voxel_size:=0.1; exec bash" &
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 launch robot_localization ekf.launch.py use_sim_time:=true; exec bash" &
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/odometry/filtered -p path_topic:=/odometry/path -p use_sim_time:=true; exec bash" &
   if [ "$RECORD" = true ]; then
