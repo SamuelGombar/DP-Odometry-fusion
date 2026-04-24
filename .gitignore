@@ -16,3 +16,6 @@ recordings/output/*/
 
 PRED_ZAPNUTIM.txt
 TODO.txt
+
+results.csv
+results.png

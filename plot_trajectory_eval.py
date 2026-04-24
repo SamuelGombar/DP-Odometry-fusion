@@ -16,6 +16,7 @@ import os
 import sys
 
 import matplotlib.pyplot as plt
+import matplotlib.collections as mc
 import numpy as np
 import pandas as pd
 
@@ -30,7 +31,7 @@ def load_csv(path: str) -> pd.DataFrame:
     return df
 
 
-def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool = False) -> None:
+def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool = False, match_lines: bool = False) -> None:
     t = df["timestamp_s"].values
     t_rel = t - t[0]  # seconds from start
 
@@ -62,6 +63,13 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
     # --- 1. Trajectories (estimated coloured by error magnitude) ---
     ax = axes[0]
     ax.plot(df["x_gt"], df["y_gt"], color="tab:green", linewidth=1.5, label="Ground truth", zorder=2)
+    if match_lines:
+        segments = np.stack(
+            [np.column_stack([df["x_est"], df["y_est"]]),
+             np.column_stack([df["x_gt"],  df["y_gt"]])],
+            axis=1,
+        )
+        ax.add_collection(mc.LineCollection(segments, colors="gray", linewidths=0.4, alpha=0.4, zorder=1))
     sc = ax.scatter(
         df["x_est"], df["y_est"],
         c=df["error_m"], cmap="RdYlGn_r",
@@ -132,6 +140,11 @@ def main() -> None:
         metavar="OUTPUT_PNG",
         help="Save figure to this path instead of displaying interactively",
     )
+    parser.add_argument(
+        "--match-lines",
+        action="store_true",
+        help="Draw gray lines connecting each matched estimated/GT pose pair in the trajectory plot.",
+    )
     args = parser.parse_args()
 
     csv_path = os.path.abspath(args.csv_path)
@@ -140,7 +153,7 @@ def main() -> None:
         sys.exit(1)
 
     df = load_csv(csv_path)
-    plot(df, csv_path, args.save, separate=args.separate)
+    plot(df, csv_path, args.save, separate=args.separate, match_lines=args.match_lines)
 
 
 if __name__ == "__main__":

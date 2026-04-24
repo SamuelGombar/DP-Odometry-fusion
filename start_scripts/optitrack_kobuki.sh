@@ -1,4 +1,4 @@
-BAG_NAME="optitrack_7"
+BAG_NAME="optitrack_6"
 SUFFIX="_1"
 RECORD=false
 

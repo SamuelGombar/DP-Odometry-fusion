@@ -121,6 +121,46 @@ def read_poses_from_bag(
 
 
 # ---------------------------------------------------------------------------
+# GT interpolation
+# ---------------------------------------------------------------------------
+
+def interpolate_gt_poses(
+    gt_poses: list[tuple[int, float, float]],
+    max_gap_ns: int,
+) -> tuple[list[tuple[int, float, float]], list[tuple[int, int]]]:
+    """
+    Fill time gaps larger than max_gap_ns in the GT trajectory with linearly
+    interpolated poses at ~10 Hz.  Returns (poses, gap_ranges) where gap_ranges
+    is a list of (start_ns, end_ns) for each gap that was filled.
+    """
+    result: list[tuple[int, float, float]] = []
+    gap_ranges: list[tuple[int, int]] = []
+    total_inserted = 0
+
+    for i, p1 in enumerate(gt_poses):
+        result.append(p1)
+        if i + 1 >= len(gt_poses):
+            break
+        p0 = p1
+        p1 = gt_poses[i + 1]
+        dt = p1[0] - p0[0]
+        if dt > max_gap_ns:
+            gap_ranges.append((p0[0], p1[0]))
+            n_steps = max(1, int(dt / 100_000_000))  # ~10 Hz
+            for k in range(1, n_steps):
+                alpha = k / n_steps
+                t_ns = int(p0[0] + alpha * dt)
+                x = p0[1] + alpha * (p1[1] - p0[1])
+                y = p0[2] + alpha * (p1[2] - p0[2])
+                result.append((t_ns, x, y))
+                total_inserted += 1
+
+    result.sort(key=lambda p: p[0])
+    print(f"  Interpolated {total_inserted} GT poses to fill {len(gap_ranges)} gap(s) > {max_gap_ns / 1e9:.3f} s")
+    return result, gap_ranges
+
+
+# ---------------------------------------------------------------------------
 # Matching strategies
 # ---------------------------------------------------------------------------
 
@@ -128,24 +168,53 @@ def match_spatial(
     est_poses: list[tuple[int, float, float]],
     gt_poses: list[tuple[int, float, float]],
     deduplicate: bool,
+    gap_ranges: list[tuple[int, int]] | None = None,
 ) -> list[tuple[int, float, float, float, float, float]]:
     """
     Match estimated poses to the nearest GT pose in 2D (x, y) using a KD-tree.
+    When gap_ranges is provided (from interpolate_gt_poses), estimated poses
+    whose timestamp falls inside a gap are matched against the full GT (including
+    interpolated points), while poses outside gaps are matched against real-only GT.
     Returns rows of (timestamp_ns, x_est, y_est, x_gt, y_gt, error_m).
     """
     from scipy.spatial import KDTree
 
     gt_arr = np.array([[p[1], p[2]] for p in gt_poses])
     est_arr = np.array([[p[1], p[2]] for p in est_poses])
-    tree = KDTree(gt_arr)
+    tree_all = KDTree(gt_arr)
+
+    # Build a real-only tree if gap_ranges provided
+    if gap_ranges:
+        gap_set: set[int] = set()
+        for idx, gp in enumerate(gt_poses):
+            for gs, ge in gap_ranges:
+                if gs < gp[0] < ge:
+                    gap_set.add(idx)
+                    break
+        real_indices = [i for i in range(len(gt_poses)) if i not in gap_set]
+        real_arr = np.array([[gt_poses[i][1], gt_poses[i][2]] for i in real_indices])
+        tree_real = KDTree(real_arr)
+
+        def _in_gap(t_ns: int) -> bool:
+            return any(gs <= t_ns <= ge for gs, ge in gap_ranges)
+    else:
+        tree_real = tree_all
+        real_indices = list(range(len(gt_poses)))
+
+        def _in_gap(t_ns: int) -> bool:
+            return False
 
     rows = []
 
     if not deduplicate:
-        dists, idxs = tree.query(est_arr)
-        for i, ep in enumerate(est_poses):
-            gp = gt_poses[idxs[i]]
-            rows.append((ep[0], ep[1], ep[2], gp[1], gp[2], float(dists[i])))
+        for ep in est_poses:
+            if _in_gap(ep[0]):
+                dist, idx = tree_all.query([ep[1], ep[2]])
+                gp = gt_poses[int(idx)]
+            else:
+                dist, ridx = tree_real.query([ep[1], ep[2]])
+                gp = gt_poses[real_indices[int(ridx)]]
+            rows.append((ep[0], ep[1], ep[2], gp[1], gp[2], float(dist)))
         return rows
 
     # Deduplicate: each GT pose matched at most once, iterating over estimated poses.
@@ -154,25 +223,34 @@ def match_spatial(
     fallback_count = 0
 
     for ep in est_poses:
-        dists, idxs = tree.query([ep[1], ep[2]], k=k)
+        if _in_gap(ep[0]):
+            active_tree = tree_all
+            active_idx_map = list(range(len(gt_poses)))
+        else:
+            active_tree = tree_real
+            active_idx_map = real_indices
+        kk = min(len(active_idx_map), k)
+        dists, idxs = active_tree.query([ep[1], ep[2]], k=kk)
         # k=1 returns scalars — normalise to arrays
-        if k == 1:
+        if kk == 1:
             dists = [float(dists)]
             idxs = [int(idxs)]
 
         matched = False
-        for dist, idx in zip(dists, idxs):
-            if idx not in used:
-                used.add(idx)
-                gp = gt_poses[idx]
+        for dist, local_idx in zip(dists, idxs):
+            global_idx = active_idx_map[int(local_idx)]
+            if global_idx not in used:
+                used.add(global_idx)
+                gp = gt_poses[global_idx]
                 rows.append((ep[0], ep[1], ep[2], gp[1], gp[2], float(dist)))
                 matched = True
                 break
 
         if not matched:
             # All k candidates were already taken; fall back to nearest regardless.
-            dist0, idx0 = tree.query([ep[1], ep[2]], k=1)
-            gp = gt_poses[int(idx0)]
+            dist0, idx0 = active_tree.query([ep[1], ep[2]], k=1)
+            global_idx0 = active_idx_map[int(idx0)]
+            gp = gt_poses[global_idx0]
             rows.append((ep[0], ep[1], ep[2], gp[1], gp[2], float(dist0)))
             fallback_count += 1
 
@@ -240,14 +318,12 @@ def match_temporal(
 # ATE computation
 # ---------------------------------------------------------------------------
 
-def align_se2(
+def compute_se2_transform(
     rows: list[tuple[int, float, float, float, float, float]],
-) -> list[tuple[int, float, float, float, float, float]]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
-    Find the optimal SE(2) transform (rotation + translation, no scale) that
-    maps estimated poses onto GT poses using SVD (Umeyama method), then
-    recompute errors with the aligned estimated poses.
-    Returns new rows with updated x_est, y_est, error_m.
+    Compute the optimal SE(2) transform (R, t) that maps estimated poses onto GT
+    using SVD (Umeyama method). Returns (R, t).
     """
     est = np.array([[r[1], r[2]] for r in rows])
     gt  = np.array([[r[3], r[4]] for r in rows])
@@ -265,7 +341,33 @@ def align_se2(
     D = np.diag([1.0, d])
     R = Vt.T @ D @ U.T
     t = mu_gt - R @ mu_est
+    return R, t
 
+
+def apply_se2_transform(
+    poses: list[tuple[int, float, float]],
+    R: np.ndarray,
+    t: np.ndarray,
+) -> list[tuple[int, float, float]]:
+    """Apply SE(2) transform (R, t) to a list of (timestamp_ns, x, y) poses."""
+    result = []
+    for ts, x, y in poses:
+        p = R @ np.array([x, y]) + t
+        result.append((ts, float(p[0]), float(p[1])))
+    return result
+
+
+def align_se2(
+    rows: list[tuple[int, float, float, float, float, float]],
+) -> list[tuple[int, float, float, float, float, float]]:
+    """
+    Find the optimal SE(2) transform (rotation + translation, no scale) that
+    maps estimated poses onto GT poses using SVD (Umeyama method), then
+    recompute errors with the aligned estimated poses.
+    Returns new rows with updated x_est, y_est, error_m.
+    """
+    R, t = compute_se2_transform(rows)
+    est = np.array([[r[1], r[2]] for r in rows])
     aligned = (R @ est.T).T + t
 
     new_rows = []
@@ -352,6 +454,17 @@ def main() -> None:
         help="[temporal mode only] Max allowed time difference in seconds for a valid match. Default: 0.1",
     )
     parser.add_argument(
+        "--interpolate-gt",
+        type=float,
+        default=None,
+        metavar="SECONDS",
+        help=(
+            "[spatial mode only] Fill GT time gaps larger than SECONDS with linearly "
+            "interpolated poses (~10 Hz). Interpolated points are only used to match "
+            "estimated poses whose timestamp falls inside the gap."
+        ),
+    )
+    parser.add_argument(
         "--output-csv",
         metavar="CSV_PATH",
         help="Write per-pose results to this CSV file (timestamp_s, x_est, y_est, x_gt, y_gt, error_m)",
@@ -397,13 +510,41 @@ def main() -> None:
         print(f'ERROR: No messages found on topic "{args.gt_topic}"', file=sys.stderr)
         sys.exit(1)
 
-    # --- Match ---
-    print("Matching poses...")
-    if args.mode == "spatial":
-        rows = match_spatial(est_poses, gt_poses, args.deduplicate)
+    if args.interpolate_gt is not None:
+        max_gap_ns = int(args.interpolate_gt * 1_000_000_000)
+        print(f"Interpolating GT gaps > {args.interpolate_gt:.3f} s...")
+        gt_poses, gap_ranges = interpolate_gt_poses(gt_poses, max_gap_ns)
     else:
-        max_dt_ns = int(args.max_dt * 1_000_000_000)
-        rows = match_temporal(est_poses, gt_poses, max_dt_ns)
+        gap_ranges = None
+
+    # --- Match ---
+    if args.align and args.mode == "spatial":
+        # Two-pass: pre-align estimated poses before spatial pairing so that
+        # nearest-neighbour operates in a consistent coordinate frame.
+        print("Matching poses (pass 1 — pre-alignment)...")
+        rows_pass1 = match_spatial(est_poses, gt_poses, args.deduplicate, gap_ranges)
+        if not rows_pass1:
+            print(
+                "ERROR: No pose pairs matched in pass 1. Check topic names.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        print("Aligning estimated trajectory (SE(2) / SVD)...")
+        R, t = compute_se2_transform(rows_pass1)
+        est_poses = apply_se2_transform(est_poses, R, t)
+        print("Matching poses (pass 2 — on aligned trajectory)...")
+        rows = match_spatial(est_poses, gt_poses, args.deduplicate, gap_ranges)
+    else:
+        print("Matching poses...")
+        if args.mode == "spatial":
+            rows = match_spatial(est_poses, gt_poses, args.deduplicate, gap_ranges)
+        else:
+            max_dt_ns = int(args.max_dt * 1_000_000_000)
+            rows = match_temporal(est_poses, gt_poses, max_dt_ns)
+
+        if args.align:
+            print("Aligning trajectories (SE(2) / SVD)...")
+            rows = align_se2(rows)
 
     if not rows:
         print(
@@ -411,10 +552,6 @@ def main() -> None:
             file=sys.stderr,
         )
         sys.exit(1)
-
-    if args.align:
-        print("Aligning trajectories (SE(2) / SVD)...")
-        rows = align_se2(rows)
 
     # --- ATE ---
     errors = [r[5] for r in rows]
