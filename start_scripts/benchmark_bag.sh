@@ -10,7 +10,7 @@ read -rp "Enter choice [1-3]: " ODOM_CHOICE
 
 case "$ODOM_CHOICE" in
   1) ODOM_TYPE="csm" ;;
-  2) ODOM_TYPE="genz_ekf" ;;
+  2) ODOM_TYPE="genz" ;;
   3) ODOM_TYPE="kin" ;;
   *)
     echo "Invalid choice. Exiting."
@@ -22,7 +22,7 @@ OUTPUT_PATH="/home/samuelg9/ros2_ws_host/recordings/output/${ODOM_TYPE}/${BAG_NA
 
 case "$ODOM_TYPE" in
   csm)      RVIZ_CONFIG="csm_fusion_benchmark" ;;
-  genz_ekf) RVIZ_CONFIG="genz_wheel_ekf_fusion_benchmark" ;;
+  genz)     RVIZ_CONFIG="genz_wheel_ekf_fusion_benchmark" ;;
   kin)      RVIZ_CONFIG="kinematic_icp" ;;
 esac
 
@@ -42,7 +42,7 @@ if [ "$ODOM_TYPE" = "csm" ]; then
     /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag record -o ${OUTPUT_PATH} /ground_truth_wrapper /imu /fusion_odometry /scan_merged_c /odom_icp /tf /tf_static /wheel_odom; exec bash" &
   fi
 
-elif [ "$ODOM_TYPE" = "genz_ekf" ]; then
+elif [ "$ODOM_TYPE" = "genz" ]; then
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag play /home/samuelg9/ros2_ws_host/recordings/bp/${BAG_NAME} --topics /scan_merged /scan_merged_filtered /amrapi/sensor/velocity /hw_layer/imu/sensor/data; pkill -SIGINT -f 'ros2 bag record'; exec bash" &
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp wheel_odom_publisher; exec bash" &
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp scan_republisher; exec bash" &
@@ -69,15 +69,11 @@ elif [ "$ODOM_TYPE" = "kin" ]; then
 fi
 
 # Ground truth (common)
-sleep 4
 if [ "$ODOM_TYPE" = "kin" ]; then
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp gt_wrapper --ros-args -p use_sim_time:=true; exec bash" &
 else
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp gt_wrapper; exec bash" &
 fi
-
-sleep 2
-/usr/bin/gnome-terminal --tab -- bash -c "ros2 bag play /home/samuelg9/ros2_ws_host/recordings/gt/gt_topic_${BAG_NAME} --rate 0.1 --remap __node:=gt_player; exec bash" &
 
 if [ "$ODOM_TYPE" = "kin" ]; then
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/ground_truth_wrapper -p path_topic:=/ground_truth_path -p use_sim_time:=true; exec bash" &
@@ -85,5 +81,8 @@ else
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/ground_truth_wrapper -p path_topic:=/ground_truth_path; exec bash" &
 fi
 
-sleep 5
-ros2 service call /gt_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 5.0}"
+sleep 6.8
+/usr/bin/gnome-terminal --tab -- bash -c "ros2 bag play /home/samuelg9/ros2_ws_host/recordings/gt/gt_topic_${BAG_NAME} --remap __node:=gt_player; exec bash" &
+
+# sleep 5
+# ros2 service call /gt_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 5.0}"

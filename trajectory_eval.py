@@ -164,6 +164,44 @@ def interpolate_gt_poses(
 # Matching strategies
 # ---------------------------------------------------------------------------
 
+def interpolate_gt_poses_spatial(
+    gt_poses: list[tuple[int, float, float]],
+    max_gap_m: float,
+) -> tuple[list[tuple[int, float, float]], list[tuple[int, int]]]:
+    """
+    Fill spatial gaps larger than max_gap_m in the GT trajectory with linearly
+    interpolated poses spaced ~max_gap_m apart.  Returns (poses, gap_ranges)
+    where gap_ranges is a list of (start_ns, end_ns) for each gap that was filled.
+    """
+    result: list[tuple[int, float, float]] = []
+    gap_ranges: list[tuple[int, int]] = []
+    total_inserted = 0
+
+    for i, p0 in enumerate(gt_poses):
+        result.append(p0)
+        if i + 1 >= len(gt_poses):
+            break
+        p1 = gt_poses[i + 1]
+        dist = float(np.hypot(p1[1] - p0[1], p1[2] - p0[2]))
+        if dist > max_gap_m:
+            gap_ranges.append((p0[0], p1[0]))
+            n_steps = max(1, int(dist / max_gap_m))
+            for k in range(1, n_steps):
+                alpha = k / n_steps
+                t_ns = int(p0[0] + alpha * (p1[0] - p0[0]))
+                x = p0[1] + alpha * (p1[1] - p0[1])
+                y = p0[2] + alpha * (p1[2] - p0[2])
+                result.append((t_ns, x, y))
+                total_inserted += 1
+
+    result.sort(key=lambda p: p[0])
+    print(
+        f"  Interpolated {total_inserted} GT poses to fill "
+        f"{len(gap_ranges)} spatial gap(s) > {max_gap_m:.3f} m"
+    )
+    return result, gap_ranges
+
+
 def match_spatial(
     est_poses: list[tuple[int, float, float]],
     gt_poses: list[tuple[int, float, float]],
@@ -465,6 +503,17 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--interpolate-gt-spatial",
+        type=float,
+        default=None,
+        metavar="METERS",
+        help=(
+            "[spatial mode only] Fill GT spatial gaps larger than METERS with linearly "
+            "interpolated poses spaced ~METERS apart. Mutually exclusive with "
+            "--interpolate-gt; if both are given, spatial takes precedence."
+        ),
+    )
+    parser.add_argument(
         "--output-csv",
         metavar="CSV_PATH",
         help="Write per-pose results to this CSV file (timestamp_s, x_est, y_est, timestamp_gt_s, x_gt, y_gt, error_m)",
@@ -510,16 +559,30 @@ def main() -> None:
         print(f'ERROR: No messages found on topic "{args.gt_topic}"', file=sys.stderr)
         sys.exit(1)
 
-    if args.interpolate_gt is not None:
+    # Cutoff: only match estimated poses up to this timestamp (ns)
+    est_poses = [p for p in est_poses if p[0] <= 1771421773 * 1_000_000_000]
+
+    if args.interpolate_gt_spatial is not None:
+        print(f"Interpolating GT spatial gaps > {args.interpolate_gt_spatial:.3f} m...")
+        gt_poses, gap_ranges = interpolate_gt_poses_spatial(gt_poses, args.interpolate_gt_spatial)
+    elif args.interpolate_gt is not None:
         max_gap_ns = int(args.interpolate_gt * 1_000_000_000)
-        print(f"Interpolating GT gaps > {args.interpolate_gt:.3f} s...")
+        print(f"Interpolating GT temporal gaps > {args.interpolate_gt:.3f} s...")
         gt_poses, gap_ranges = interpolate_gt_poses(gt_poses, max_gap_ns)
     else:
         gap_ranges = None
 
     # --- Match ---
-    if args.align and args.mode == "spatial":
+    max_dt_ns = int(args.max_dt * 1_000_000_000)
+
+    def _match() -> list:
+        if args.mode == "spatial":
+            return match_spatial(est_poses, gt_poses, args.deduplicate, gap_ranges)
+        return match_temporal(est_poses, gt_poses, max_dt_ns)
+
+    if args.align:
         # Iterative ICP-style alignment: match → SE(2) → apply → repeat until convergence.
+        # Always uses spatial (KD-tree position) matching so correspondences improve each round.
         MAX_ITER = 50
         CONV_THRESH = 1e-6  # metres RMSE change
         prev_rmse = float("inf")
@@ -544,17 +607,12 @@ def main() -> None:
             est_poses = apply_se2_transform(est_poses, R, t)
         else:
             print(f"  Reached max iterations ({MAX_ITER}).")
+        # Alignment done — now match pairs using the selected mode for ATE.
+        print("Matching poses...")
+        rows = _match()
     else:
         print("Matching poses...")
-        if args.mode == "spatial":
-            rows = match_spatial(est_poses, gt_poses, args.deduplicate, gap_ranges)
-        else:
-            max_dt_ns = int(args.max_dt * 1_000_000_000)
-            rows = match_temporal(est_poses, gt_poses, max_dt_ns)
-
-        if args.align:
-            print("Aligning trajectories (SE(2) / SVD)...")
-            rows = align_se2(rows)
+        rows = _match()
 
     if not rows:
         print(
