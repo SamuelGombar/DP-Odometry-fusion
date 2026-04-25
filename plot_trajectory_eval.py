@@ -57,7 +57,7 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
 
     if separate:
         figs_axes = [
-            plt.subplots(1, 1, figsize=(10, 8)), #(11, 8) pre Frodo, (6, 8) 
+            plt.subplots(1, 1, figsize=(11, 8)), #(11, 8) pre Frodo, (6, 8) 
             plt.subplots(1, 1, figsize=(14, 8)),
             plt.subplots(1, 1, figsize=(14, 8)),
         ]
@@ -90,7 +90,7 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
     tail = df[df["x_est"].notna() & df["error_m"].isna()].sort_values("timestamp_s")
     # Sort GT by its own timestamps so the line follows the actual GT path order
     gt_line = df[df["timestamp_gt_s"].notna()].drop_duplicates(subset="timestamp_gt_s").sort_values("timestamp_gt_s")
-    gt_handle, = ax.plot(gt_line["x_gt"], gt_line["y_gt"], color=plt.cm.viridis(0.0), linewidth=3.0, zorder=2)
+    gt_handle, = ax.plot(gt_line["x_gt"], gt_line["y_gt"], color=plt.cm.plasma(0.0), linewidth=3.0, zorder=2)
     if match_lines:
         segments = np.stack(
             [np.column_stack([matched["x_est"], matched["y_est"]]),
@@ -101,12 +101,12 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
     est_pts = np.column_stack([matched["x_est"].values, matched["y_est"].values])
     est_segments = np.stack([est_pts[:-1], est_pts[1:]], axis=1)
     norm = plt.Normalize(matched["error_m"].min(), matched["error_m"].max())
-    est_lc = mc.LineCollection(est_segments, cmap="viridis", norm=norm, linewidths=3.0, zorder=3)
+    est_lc = mc.LineCollection(est_segments, cmap="plasma", norm=norm, linewidths=3.0, zorder=3)
     est_lc.set_array((matched["error_m"].values[:-1] + matched["error_m"].values[1:]) / 2)
     ax.add_collection(est_lc)
     sc = ax.scatter(
         matched["x_est"], matched["y_est"],
-        c=matched["error_m"], cmap="viridis", norm=norm,
+        c=matched["error_m"], cmap="plasma", norm=norm,
         s=4, linewidths=0, zorder=4,
     )    # Draw post-cutoff estimated tail (no pairing) in gray
     if not tail.empty:
@@ -124,7 +124,7 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
     n_dots = 6
     est_dots = tuple(
         plt.Line2D([], [], marker="o", linestyle="None", markersize=7,
-                   color=plt.cm.viridis(i / (n_dots - 1)))
+                   color=plt.cm.plasma(i / (n_dots - 1)))
         for i in range(n_dots)
     )
     ax.legend(
@@ -134,7 +134,7 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
         fontsize=15,
     )
     ax.set_aspect("equal")
-    # ax.set_xlim(-20, 20)
+    ax.set_xlim(-20, 20)
     ax.grid(True, linewidth=0.4)
     ax.tick_params(labelsize=24)
 

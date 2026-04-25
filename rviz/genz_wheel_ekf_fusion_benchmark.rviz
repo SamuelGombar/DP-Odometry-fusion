@@ -28,7 +28,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: Local Map
 Visualization Manager:
   Class: ""
   Displays:
@@ -491,16 +491,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 18.228778839111328
+      Distance: 5.673960208892822
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.1035737991333008
-        Y: 2.2707319259643555
-        Z: 0.5724517703056335
+        X: 2.3320834636688232
+        Y: 0.8255293965339661
+        Z: 0.6027876138687134
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

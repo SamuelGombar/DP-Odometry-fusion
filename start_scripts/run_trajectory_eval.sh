@@ -1,4 +1,4 @@
-BAG_NAME=Candy_4m_0075_1_4
+BAG_NAME=Ralf_4m_4_0075
 KOBUKI=false
 SAVE_DIR=/home/samuelg9/Documents/Skola/DP/latex/img
 
@@ -36,6 +36,10 @@ else
     --output-csv /home/samuelg9/ros2_ws_host/results.csv \
     --align \
     --mode temporal \
+    --timestamp-offset -6.2859
+    
+    #-6.5
+    #  --hybrid-fraction 1 0.09    #0 - temporal first
       
 fi
 mkdir -p "$SAVE_DIR"

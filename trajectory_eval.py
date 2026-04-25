@@ -460,11 +460,12 @@ def main() -> None:
     parser.add_argument(
         "--mode",
         choices=["spatial", "temporal"],
-        default="spatial",
+        default=None,
         help=(
             "Matching mode. 'spatial': nearest-neighbour on 2D position (KD-tree) — "
             "robust when timestamps are on different time bases (e.g. sped-up GT bag). "
-            "'temporal': nearest-neighbour on header timestamp. Default: spatial"
+            "'temporal': nearest-neighbour on header timestamp. Default: spatial. "
+            "Ignored (with a warning) when --hybrid-fraction is set."
         ),
     )
     parser.add_argument(
@@ -492,6 +493,18 @@ def main() -> None:
         help="[temporal mode only] Max allowed time difference in seconds for a valid match. Default: 0.1",
     )
     parser.add_argument(
+        "--hybrid-fraction",
+        nargs=2,
+        default=None,
+        metavar=("MODE", "FRACTION"),
+        help=(
+            "Split matching: MODE selects which strategy applies to the first FRACTION "
+            "of estimated poses (0 = temporal first, 1 = spatial first). "
+            "E.g. '0 0.2' = first 20%% temporal + last 80%% spatial. "
+            "'1 0.3' = first 30%% spatial + last 70%% temporal. Overrides --mode when set."
+        ),
+    )
+    parser.add_argument(
         "--interpolate-gt",
         type=float,
         default=None,
@@ -514,11 +527,47 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--timestamp-offset",
+        type=float,
+        default=0.0,
+        metavar="SECONDS",
+        help=(
+            "Shift estimated pose timestamps by this many seconds before matching "
+            "(positive = est timestamps are behind GT, negative = ahead). "
+            "Only affects temporal and hybrid matching modes."
+        ),
+    )
+    parser.add_argument(
         "--output-csv",
         metavar="CSV_PATH",
         help="Write per-pose results to this CSV file (timestamp_s, x_est, y_est, timestamp_gt_s, x_gt, y_gt, error_m)",
     )
     args = parser.parse_args()
+
+    # Parse --hybrid-fraction into (hybrid_mode, hybrid_frac) if given.
+    hybrid_mode: int | None = None
+    hybrid_frac: float | None = None
+    if args.hybrid_fraction is not None:
+        raw_mode, raw_frac = args.hybrid_fraction
+        if raw_mode not in ("0", "1"):
+            print("ERROR: --hybrid-fraction MODE must be 0 (temporal) or 1 (spatial).", file=sys.stderr)
+            sys.exit(1)
+        hybrid_mode = int(raw_mode)
+        try:
+            hybrid_frac = float(raw_frac)
+        except ValueError:
+            print("ERROR: --hybrid-fraction FRACTION must be a number between 0 and 1.", file=sys.stderr)
+            sys.exit(1)
+
+    # Warn if --mode is explicitly combined with --hybrid-fraction (mode is ignored).
+    if hybrid_frac is not None and args.mode is not None:
+        print(
+            f"Warning: --mode {args.mode!r} is ignored because --hybrid-fraction is set.",
+            file=sys.stderr,
+        )
+    # Resolve effective mode (default: spatial).
+    if args.mode is None:
+        args.mode = "spatial"
 
     bag_path = os.path.abspath(args.bag_path)
     if not os.path.isdir(bag_path):
@@ -537,10 +586,21 @@ def main() -> None:
     print(f"Bag        : {bag_path}")
     print(f"Odom topic : {args.odom_topic}")
     print(f"GT topic   : {args.gt_topic}")
-    mode_label = args.mode
-    if args.mode == "spatial" and args.deduplicate:
-        mode_label += " (deduplicate ON)"
+    if hybrid_frac is not None:
+        frac = max(0.0, min(1.0, hybrid_frac))
+        first_label  = "temporal" if hybrid_mode == 0 else "spatial"
+        second_label = "spatial"  if hybrid_mode == 0 else "temporal"
+        mode_label = f"hybrid ({first_label} first {frac * 100:.0f}%, {second_label} rest"
+        if args.deduplicate:
+            mode_label += ", deduplicate ON"
+        mode_label += ")"
+    else:
+        mode_label = args.mode
+        if args.mode == "spatial" and args.deduplicate:
+            mode_label += " (deduplicate ON)"
     print(f"Mode       : {mode_label}")
+    if args.timestamp_offset != 0.0:
+        print(f"TS offset  : {args.timestamp_offset:+.3f} s (applied to estimated poses)")
     print()
 
     # --- Read bag (single pass) ---
@@ -560,7 +620,12 @@ def main() -> None:
         sys.exit(1)
 
     # Cutoff: only match estimated poses up to this timestamp (ns)
-    est_poses = [p for p in est_poses if p[0] <= 1771421773 * 1_000_000_000]
+    # est_poses = [p for p in est_poses if p[0] <= 1771421773 * 1_000_000_000]
+
+    if args.timestamp_offset != 0.0:
+        offset_ns = int(args.timestamp_offset * 1_000_000_000)
+        est_poses = [(t + offset_ns, x, y) for t, x, y in est_poses]
+        print(f"Timestamp offset applied: {args.timestamp_offset:+.3f} s ({offset_ns:+d} ns) to estimated poses")
 
     if args.interpolate_gt_spatial is not None:
         print(f"Interpolating GT spatial gaps > {args.interpolate_gt_spatial:.3f} m...")
@@ -576,6 +641,16 @@ def main() -> None:
     max_dt_ns = int(args.max_dt * 1_000_000_000)
 
     def _match() -> list:
+        if hybrid_frac is not None:
+            frac = max(0.0, min(1.0, hybrid_frac))
+            split = int(len(est_poses) * frac)
+            if hybrid_mode == 0:  # temporal first
+                rows_a = match_temporal(est_poses[:split], gt_poses, max_dt_ns) if split > 0 else []
+                rows_b = match_spatial(est_poses[split:], gt_poses, args.deduplicate, gap_ranges) if split < len(est_poses) else []
+            else:  # spatial first
+                rows_a = match_spatial(est_poses[:split], gt_poses, args.deduplicate, gap_ranges) if split > 0 else []
+                rows_b = match_temporal(est_poses[split:], gt_poses, max_dt_ns) if split < len(est_poses) else []
+            return rows_a + rows_b
         if args.mode == "spatial":
             return match_spatial(est_poses, gt_poses, args.deduplicate, gap_ranges)
         return match_temporal(est_poses, gt_poses, max_dt_ns)

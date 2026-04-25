@@ -1,6 +1,6 @@
-BAG_NAME="Candy_4m"
-SUFFIX="_0075_1_4"
-RECORD=false
+BAG_NAME="Ralf_4m"
+SUFFIX="_4_0075"
+RECORD=true
 
 echo "Select odometry pipeline:"
 echo "  1) CSM"
@@ -81,8 +81,7 @@ else
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/ground_truth_wrapper -p path_topic:=/ground_truth_path; exec bash" &
 fi
 
-sleep 6.8
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag play /home/samuelg9/ros2_ws_host/recordings/gt/gt_topic_${BAG_NAME} --remap __node:=gt_player; exec bash" &
 
-# sleep 5
-# ros2 service call /gt_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 5.0}"
+# sleep 6.3
+# ros2 service call /gt_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 1.0}"
