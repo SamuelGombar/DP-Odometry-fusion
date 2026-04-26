@@ -90,23 +90,23 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
     tail = df[df["x_est"].notna() & df["error_m"].isna()].sort_values("timestamp_s")
     # Sort GT by its own timestamps so the line follows the actual GT path order
     gt_line = df[df["timestamp_gt_s"].notna()].drop_duplicates(subset="timestamp_gt_s").sort_values("timestamp_gt_s")
-    gt_handle, = ax.plot(gt_line["x_gt"], gt_line["y_gt"], color=plt.cm.plasma(0.0), linewidth=3.0, zorder=2)
-    if match_lines:
+    gt_handle, = ax.plot(gt_line["x_gt"], gt_line["y_gt"], color=plt.cm.cividis(0.0), linewidth=3.0, zorder=2)
+    if match_lines:                                                     #plasma, cividis, viridis
         segments = np.stack(
             [np.column_stack([matched["x_est"], matched["y_est"]]),
              np.column_stack([matched["x_gt"],  matched["y_gt"]])],
             axis=1,
         )
-        ax.add_collection(mc.LineCollection(segments, colors="gray", linewidths=0.4, alpha=0.4, zorder=1))
+        ax.add_collection(mc.LineCollection(segments, colors="gray", linewidths=0.2, alpha=0.4, zorder=1))
     est_pts = np.column_stack([matched["x_est"].values, matched["y_est"].values])
     est_segments = np.stack([est_pts[:-1], est_pts[1:]], axis=1)
     norm = plt.Normalize(matched["error_m"].min(), matched["error_m"].max())
-    est_lc = mc.LineCollection(est_segments, cmap="plasma", norm=norm, linewidths=3.0, zorder=3)
+    est_lc = mc.LineCollection(est_segments, cmap="cividis", norm=norm, linewidths=3.0, zorder=3)
     est_lc.set_array((matched["error_m"].values[:-1] + matched["error_m"].values[1:]) / 2)
     ax.add_collection(est_lc)
     sc = ax.scatter(
         matched["x_est"], matched["y_est"],
-        c=matched["error_m"], cmap="plasma", norm=norm,
+        c=matched["error_m"], cmap="cividis", norm=norm,
         s=4, linewidths=0, zorder=4,
     )    # Draw post-cutoff estimated tail (no pairing) in gray
     if not tail.empty:
@@ -124,7 +124,7 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
     n_dots = 6
     est_dots = tuple(
         plt.Line2D([], [], marker="o", linestyle="None", markersize=7,
-                   color=plt.cm.plasma(i / (n_dots - 1)))
+                   color=plt.cm.cividis(i / (n_dots - 1)))
         for i in range(n_dots)
     )
     ax.legend(
@@ -134,7 +134,7 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
         fontsize=15,
     )
     ax.set_aspect("equal")
-    ax.set_xlim(-20, 20)
+    ax.set_xlim(-20, 20) #onlz for ralf
     ax.grid(True, linewidth=0.4)
     ax.tick_params(labelsize=24)
 
@@ -156,6 +156,7 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
     ax.hist(matched["error_m"], bins=40, color="tab:blue", alpha=0.75, edgecolor="white", linewidth=0.4)
     ax.axvline(rmse, color="tab:red", linestyle="--", linewidth=1.8, label=f"RMSE {rmse:.4f} m")
     ax.axvline(mean_e, color="tab:purple", linestyle=":", linewidth=2.5, label=f"Mean {mean_e:.4f} m")
+    ax.axvline(std_e, color="tab:green", linestyle="-.", linewidth=2.5, label=f"Smerodajná odch. {std_e:.4f} m")
     ax.set_xlabel("Error (m)", fontsize=26)
     ax.set_ylabel("Počet", fontsize=26)
     ax.set_title("Distribúcia chyby", fontsize=24)

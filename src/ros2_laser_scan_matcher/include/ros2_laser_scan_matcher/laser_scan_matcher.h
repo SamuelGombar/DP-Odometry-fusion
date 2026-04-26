@@ -81,6 +81,11 @@ private:
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_publisher_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr fusion_publisher_;
+  rclcpp::TimerBase::SharedPtr republish_timer_;
+  nav_msgs::msg::Odometry last_odom_msg_;
+  nav_msgs::msg::Odometry last_fusion_msg_;
+  bool has_last_odom_msg_;
+  rclcpp::Time last_scan_publish_time_;
   // Coordinate parameters
   std::string map_frame_;
   std::string base_frame_;
@@ -143,6 +148,7 @@ private:
     const std::string & description = "", const std::string & additional_constraints = "",
     bool read_only = false);
   void createCache (const sensor_msgs::msg::LaserScan::SharedPtr& scan_msg);
+  void republishTimerCallback();
 
 
 };  // LaserScanMatcher

@@ -436,7 +436,13 @@ def main() -> None:
             "and a ground truth topic stored in a ROS 2 bag file."
         )
     )
-    parser.add_argument("bag_path", help="Path to the ROS 2 bag directory")
+    parser.add_argument("bag_path", help="Path to the ROS 2 bag directory (estimated odometry)")
+    parser.add_argument(
+        "--gt-bag",
+        default=None,
+        metavar="GT_BAG_PATH",
+        help="Path to a separate ROS 2 bag directory for the GT topic. Defaults to bag_path.",
+    )
     parser.add_argument(
         "--odom-topic",
         default="/odometry/filtered",
@@ -538,6 +544,17 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--cutoff-timestamp",
+        type=float,
+        default=None,
+        metavar="SECONDS",
+        help=(
+            "Discard all estimated and GT poses with a header timestamp > SECONDS "
+            "(Unix time, same scale as the bag timestamps). Applied after "
+            "--timestamp-offset. Both topics are cut."
+        ),
+    )
+    parser.add_argument(
         "--output-csv",
         metavar="CSV_PATH",
         help="Write per-pose results to this CSV file (timestamp_s, x_est, y_est, timestamp_gt_s, x_gt, y_gt, error_m)",
@@ -574,6 +591,11 @@ def main() -> None:
         print(f"ERROR: bag path not found or not a directory: {bag_path}", file=sys.stderr)
         sys.exit(1)
 
+    gt_bag_path = os.path.abspath(args.gt_bag) if args.gt_bag else bag_path
+    if not os.path.isdir(gt_bag_path):
+        print(f"ERROR: GT bag path not found or not a directory: {gt_bag_path}", file=sys.stderr)
+        sys.exit(1)
+
     if args.kobuki and args.gt_topic == "/ground_truth_wrapper":
         args.gt_topic = "/vrpn_mocap/RigidBody_002/pose"
 
@@ -583,7 +605,11 @@ def main() -> None:
 
     # --- Print header ---
     print()
-    print(f"Bag        : {bag_path}")
+    if gt_bag_path != bag_path:
+        print(f"Odom bag   : {bag_path}")
+        print(f"GT bag     : {gt_bag_path}")
+    else:
+        print(f"Bag        : {bag_path}")
     print(f"Odom topic : {args.odom_topic}")
     print(f"GT topic   : {args.gt_topic}")
     if hybrid_frac is not None:
@@ -603,11 +629,17 @@ def main() -> None:
         print(f"TS offset  : {args.timestamp_offset:+.3f} s (applied to estimated poses)")
     print()
 
-    # --- Read bag (single pass) ---
-    print("Reading bag...")
-    poses = read_poses_from_bag(bag_path, [args.odom_topic, args.gt_topic], pose_stamped_topics)
-    est_poses = poses[args.odom_topic]
-    gt_poses = poses[args.gt_topic]
+    # --- Read bag(s) ---
+    if gt_bag_path == bag_path:
+        print("Reading bag...")
+        poses = read_poses_from_bag(bag_path, [args.odom_topic, args.gt_topic], pose_stamped_topics)
+        est_poses = poses[args.odom_topic]
+        gt_poses = poses[args.gt_topic]
+    else:
+        print("Reading odom bag...")
+        est_poses = read_poses_from_bag(bag_path, [args.odom_topic])[args.odom_topic]
+        print("Reading GT bag...")
+        gt_poses = read_poses_from_bag(gt_bag_path, [args.gt_topic], pose_stamped_topics)[args.gt_topic]
 
     print(f"  Estimated poses : {len(est_poses)}")
     print(f"  GT poses        : {len(gt_poses)}")
@@ -619,13 +651,31 @@ def main() -> None:
         print(f'ERROR: No messages found on topic "{args.gt_topic}"', file=sys.stderr)
         sys.exit(1)
 
-    # Cutoff: only match estimated poses up to this timestamp (ns)
-    # est_poses = [p for p in est_poses if p[0] <= 1771421773 * 1_000_000_000]
+    est_t0_ns = est_poses[0][0]
+    gt_t0_ns  = gt_poses[0][0]
+
+    dt_first_s = (est_t0_ns - gt_t0_ns) / 1e9
+    print(f"  First-msg timestamp difference (odom - GT) : {dt_first_s:+.6f} s")
+    print(f"    {args.odom_topic} t0 : {est_t0_ns / 1e9:.6f} s")
+    print(f"    {args.gt_topic} t0  : {gt_t0_ns  / 1e9:.6f} s")
+    print()
 
     if args.timestamp_offset != 0.0:
         offset_ns = int(args.timestamp_offset * 1_000_000_000)
         est_poses = [(t + offset_ns, x, y) for t, x, y in est_poses]
         print(f"Timestamp offset applied: {args.timestamp_offset:+.3f} s ({offset_ns:+d} ns) to estimated poses")
+
+    if args.cutoff_timestamp is not None:
+        cutoff_ns = int(args.cutoff_timestamp * 1_000_000_000)
+        est_before = len(est_poses)
+        gt_before  = len(gt_poses)
+        est_poses = [p for p in est_poses if p[0] <= cutoff_ns]
+        gt_poses  = [p for p in gt_poses  if p[0] <= cutoff_ns]
+        print(
+            f"Cutoff {args.cutoff_timestamp:.3f} s applied: "
+            f"{est_before - len(est_poses)} est poses and "
+            f"{gt_before - len(gt_poses)} GT poses removed."
+        )
 
     if args.interpolate_gt_spatial is not None:
         print(f"Interpolating GT spatial gaps > {args.interpolate_gt_spatial:.3f} m...")
@@ -731,6 +781,8 @@ def main() -> None:
             for gp in gt_poses:
                 writer.writerow(["", "", "", f"{gp[0] / 1e9:.9f}", f"{gp[1]:.6f}", f"{gp[2]:.6f}", ""])
         print(f"\nPer-pose results written to: {out_path}")
+
+
 
 
 if __name__ == "__main__":

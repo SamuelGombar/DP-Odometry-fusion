@@ -248,6 +248,8 @@ LaserScanMatcher::LaserScanMatcher() : Node("laser_scan_matcher"), initialized_(
   imu_orientation_.setValue(0.0, 0.0, 0.0, 1.0);
   imu_received_ = false;
   imu_msg_count_ = 0;
+  has_last_odom_msg_ = false;
+  last_scan_publish_time_ = this->now();
   input_.laser[0] = 0.0;
   input_.laser[1] = 0.0;
   input_.laser[2] = 0.0;
@@ -270,6 +272,9 @@ LaserScanMatcher::LaserScanMatcher() : Node("laser_scan_matcher"), initialized_(
   if(publish_odom_){
     odom_publisher_ = this->create_publisher<nav_msgs::msg::Odometry>(odom_topic_, rclcpp::SystemDefaultsQoS());
     fusion_publisher_ = this->create_publisher<nav_msgs::msg::Odometry>("fusion_odometry", rclcpp::SystemDefaultsQoS());
+    republish_timer_ = this->create_wall_timer(
+      std::chrono::milliseconds(static_cast<int>(1000.0 / 34.0)),
+      std::bind(&LaserScanMatcher::republishTimerCallback, this));
   }
 }
 
@@ -304,6 +309,7 @@ void LaserScanMatcher::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
     msg->orientation.z,
     msg->orientation.w
   );
+  imu_received_ = true;
 }
 
 void LaserScanMatcher::wheel_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
@@ -505,6 +511,7 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
     prev_f2b_ = f2b_;
     prev_wheel_f2b_ = wheel_f2b_;
     odom_publisher_->publish(odom_msg);
+    last_odom_msg_ = odom_msg;
 
     //POCITANIE K-POSLEDNYCH TRANSF.
     static std::vector<tf2::Transform> lidar_transformations;
@@ -536,7 +543,7 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
 
     fusion_ = fusion_ * lidar_pose_diff;
     double ratio = lidar_sum_poses_dist/wheel_sum_poses_dist;
-    static double corr_threshold = 0.3;
+    static double corr_threshold = 0.15;
     // std::cout << ratio << std::endl;
     if ((ratio < corr_threshold)) {
       // if (wheel_pose_diff.getOrigin().length() > 0.01) {
@@ -604,6 +611,9 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
 
     prev_fusion_ = fusion_;
     fusion_publisher_->publish(fusion_msg);
+    last_fusion_msg_ = fusion_msg;
+    has_last_odom_msg_ = true;
+    last_scan_publish_time_ = now();
   }
 
   
@@ -641,6 +651,25 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
   }
   last_icp_time_ = now();
   return true;
+}
+
+void LaserScanMatcher::republishTimerCallback()
+{
+  if (!has_last_odom_msg_) return;
+
+  double elapsed = (now() - last_scan_publish_time_).nanoseconds() / 1e9;
+  // Only republish when scans have stopped (no publish within 1.5 timer periods)
+  if (elapsed <= 1.5 / 34.0) return;
+
+  auto now_time = now();
+  last_odom_msg_.header.stamp = now_time;
+  last_odom_msg_.twist.twist.linear.x = 0.0;
+  last_odom_msg_.twist.twist.linear.y = 0.0;
+  last_odom_msg_.twist.twist.angular.z = 0.0;
+  odom_publisher_->publish(last_odom_msg_);
+
+  last_fusion_msg_.header.stamp = now_time;
+  fusion_publisher_->publish(last_fusion_msg_);
 }
 
 bool LaserScanMatcher::newKeyframeNeeded(const tf2::Transform& d)

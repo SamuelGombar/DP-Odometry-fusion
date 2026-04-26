@@ -1,6 +1,10 @@
-BAG_NAME=Ralf_4m_4_0075
+BAG_NAME=Ralf_7m_03
 KOBUKI=false
+MODE=temporal
 SAVE_DIR=/home/samuelg9/Documents/Skola/DP/latex/img
+CUTOFF_TS=1777213240     #9999999999 for no cutoff  
+TIMESTAMP_OFFSET=-23644.927743
+GT_BAG=genz/Ralf_4m_4_0075
 
 echo "Select odometry pipeline:"
 echo "  1) CSM"
@@ -35,12 +39,12 @@ else
     --odom-topic ${ODOM_TOPIC} \
     --output-csv /home/samuelg9/ros2_ws_host/results.csv \
     --align \
-    --mode temporal \
-    --timestamp-offset -6.2859
-    
+    --mode ${MODE} \
+    --cutoff-timestamp "$CUTOFF_TS" \
+    --gt-bag /home/samuelg9/ros2_ws_host/recordings/output/${GT_BAG} \
+    --timestamp-offset "$TIMESTAMP_OFFSET" \
     #-6.5
-    #  --hybrid-fraction 1 0.09    #0 - temporal first
-      
+    #  --hybrid-fraction 1 0.09    #0 - temporal first     
 fi
 mkdir -p "$SAVE_DIR"
 python3 /home/samuelg9/ros2_ws_host/plot_trajectory_eval.py /home/samuelg9/ros2_ws_host/results.csv \
@@ -49,5 +53,5 @@ python3 /home/samuelg9/ros2_ws_host/plot_trajectory_eval.py /home/samuelg9/ros2_
   --rotate -180 \
   --traj-title "$TRAJ_TITLE" \
   --est-label "$EST_LABEL" \
-  --save "${SAVE_DIR}/${ODOM_TYPE}_$(echo "$BAG_NAME" | cut -d'_' -f1-2).png"
-
+  --save "${SAVE_DIR}/${ODOM_TYPE}_$(echo "$BAG_NAME" | cut -d'_' -f1-2)_${MODE}.png" \
+  # --cutoff-timestamp "$CUTOFF_TS" \
