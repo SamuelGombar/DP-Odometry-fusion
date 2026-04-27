@@ -86,6 +86,10 @@ private:
             actual_linear_  = ramp(actual_linear_,  target_linear_,  LINEAR_STEP);
             actual_angular_ = ramp(actual_angular_, target_angular_, ANGULAR_STEP);
 
+            // Kobuki bug workaround: always enforce a minimum angular velocity
+            if (std::abs(actual_angular_) < 0.001)
+                actual_angular_ = (actual_angular_ >= 0.0) ? 0.001 : -0.001;
+
             msg.linear.x  = actual_linear_;
             msg.angular.z = actual_angular_;
             pub_->publish(msg);

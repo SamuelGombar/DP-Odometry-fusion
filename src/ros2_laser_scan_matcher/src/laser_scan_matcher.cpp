@@ -576,7 +576,7 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
     if (imu_received_) {
       double imu_yaw = tf2::getYaw(imu_orientation_);
       tf2::Quaternion imu_q;
-      imu_q.setRPY(0.0, 0.0, optitrack_ ? imu_yaw + M_PI : imu_yaw);
+      imu_q.setRPY(0.0, 0.0, optitrack_ ? imu_yaw + M_PI + M_PI/2 - M_PI/8 : imu_yaw);
       fusion_.setRotation(imu_q);
     }
 

@@ -1,10 +1,10 @@
-BAG_NAME=Ralf_7m_03
-KOBUKI=false
-MODE=temporal
+BAG_NAME=opti_2_15m
+KOBUKI=true
+MODE=spatial
 SAVE_DIR=/home/samuelg9/Documents/Skola/DP/latex/img
-CUTOFF_TS=1777213240     #9999999999 for no cutoff  
-TIMESTAMP_OFFSET=-23644.927743
-GT_BAG=genz/Ralf_4m_4_0075
+CUTOFF_TS=9999999999     #9999999999 for no cutoff  
+TIMESTAMP_OFFSET=0.0
+GT_BAG=/home/samuelg9/ros2_ws_host/recordings/optitrack/opti_2
 
 echo "Select odometry pipeline:"
 echo "  1) CSM"
@@ -13,7 +13,7 @@ echo "  3) Kinematic ICP"
 read -rp "Enter choice [1-3]: " ODOM_CHOICE
 
 case "$ODOM_CHOICE" in
-  1) ODOM_TYPE="csm";      ODOM_TOPIC="/fusion_odometry";              EST_LABEL="CSM" ;;               #/odom_icp
+  1) ODOM_TYPE="csm";      ODOM_TOPIC="/fusion_odometry";              EST_LABEL="CSM" ;;               # /odom_icp
   2) ODOM_TYPE="genz"; ODOM_TOPIC="/odometry/filtered";           EST_LABEL="GenZ-ICP" ;;             #/genz/odometry
   3) ODOM_TYPE="kin";      ODOM_TOPIC="/kinematic_icp/lidar_odometry"; EST_LABEL="Kinematic ICP" ;;
   *)
@@ -31,6 +31,7 @@ if [ "$KOBUKI" = "true" ]; then
     --odom-topic ${ODOM_TOPIC} \
     --align \
     --kobuki \
+    --mode ${MODE} \
     --output-csv /home/samuelg9/ros2_ws_host/results.csv \
     --interpolate-gt 0.5 
 else
@@ -41,7 +42,7 @@ else
     --align \
     --mode ${MODE} \
     --cutoff-timestamp "$CUTOFF_TS" \
-    --gt-bag /home/samuelg9/ros2_ws_host/recordings/output/${GT_BAG} \
+    --gt-bag ${GT_BAG} \
     --timestamp-offset "$TIMESTAMP_OFFSET" \
     #-6.5
     #  --hybrid-fraction 1 0.09    #0 - temporal first     

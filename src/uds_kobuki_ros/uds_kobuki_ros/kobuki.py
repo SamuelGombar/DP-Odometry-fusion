@@ -152,7 +152,7 @@ def parse_kobuki_message(data):
             _last_gyro_angle = output.GyroAngle
             _last_gyro_time = now
             checked_value += 5  # 2 for angle rate + 3 unused bytes
-            print(output.GyroAngleRate)
+            # print(output.GyroAngleRate)
 
 
         else:

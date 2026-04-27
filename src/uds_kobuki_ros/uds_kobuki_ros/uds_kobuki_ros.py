@@ -228,7 +228,7 @@ class Kobuki(Node):
 
         # self.get_logger().info(f'GyroAngleRate: {self.robot_data.GyroAngleRate}')
         self.odom_pub.publish(msg)
-        # self.odom_to_base_link_tf(msg)
+        self.odom_to_base_link_tf(msg)
 
     def publish_laser_scan(self, stamp: Time):
         msg = LaserScan()

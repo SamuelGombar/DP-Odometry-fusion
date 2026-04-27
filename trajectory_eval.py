@@ -708,8 +708,8 @@ def main() -> None:
     if args.align:
         # Iterative ICP-style alignment: match → SE(2) → apply → repeat until convergence.
         # Always uses spatial (KD-tree position) matching so correspondences improve each round.
-        MAX_ITER = 50
-        CONV_THRESH = 1e-6  # metres RMSE change
+        MAX_ITER = 100
+        CONV_THRESH = 1e-20  # metres RMSE change
         prev_rmse = float("inf")
         rows = []
         print("Aligning estimated trajectory (iterative SE(2) / SVD)...")

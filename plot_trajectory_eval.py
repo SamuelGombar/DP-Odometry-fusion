@@ -134,7 +134,7 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
         fontsize=15,
     )
     ax.set_aspect("equal")
-    ax.set_xlim(-20, 20) #onlz for ralf
+    # ax.set_xlim(-20, 20) #onlz for ralf
     ax.grid(True, linewidth=0.4)
     ax.tick_params(labelsize=24)
 

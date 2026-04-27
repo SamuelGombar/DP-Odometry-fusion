@@ -1,6 +1,6 @@
-BAG_NAME="optitrack_6"
-SUFFIX="_5_01"
-RECORD=false
+BAG_NAME="opti_2"
+SUFFIX="_15m"
+RECORD=true
 
 echo "Select odometry pipeline:"
 echo "  1) CSM"
