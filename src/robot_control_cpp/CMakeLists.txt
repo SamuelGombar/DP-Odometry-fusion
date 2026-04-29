@@ -101,6 +101,7 @@ add_executable(gt_wrapper src/bp/gt_wrapper.cpp)
 ament_target_dependencies(gt_wrapper
   rclcpp
   nav_msgs
+  geometry_msgs
   tf2
   tf2_geometry_msgs)
 

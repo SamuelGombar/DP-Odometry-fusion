@@ -1,8 +1,8 @@
-BAG_NAME="Candy_4m"
-SUFFIX="_015"
+BAG_NAME="opti_structured_current_conf_4m"
 SUBFOLDER=csm
+KOBUKI=true
 
-BAG_PATH="/home/samuelg9/ros2_ws_host/recordings/output/${SUBFOLDER}/${BAG_NAME}${SUFFIX}"
+BAG_PATH="/home/samuelg9/ros2_ws_host/recordings/output/kobuki/${SUBFOLDER}/${BAG_NAME}"
 
 ODOM_TOPIC="/fusion_odometry"
 ODOM_PATH_TOPIC="/fusion_odometry_path"
@@ -18,8 +18,13 @@ RVIZ="csm_fusion_benchmark"
 /usr/bin/gnome-terminal --tab -- bash -c "rviz2 -d /home/samuelg9/ros2_ws_host/rviz/${RVIZ}.rviz; exec bash" &
 
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag play ${BAG_PATH} --remap __node:=compr_player; exec bash" &
-/usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/wheel_odom -p path_topic:=/wheel_odom_path; exec bash" &
-/usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/ground_truth_wrapper -p path_topic:=/ground_truth_path; exec bash" &
+if [[ "${KOBUKI}" == "true" ]]; then
+    /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/odom -p path_topic:=/wheel_odom_path; exec bash" &
+    /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/optitrack -p path_topic:=/ground_truth_path; exec bash" &
+else
+    /usr/bin/gnome-terminal --tab -- bash -c ">ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/wheel_odom -p path_topic:=/wheel_odom_path; exec bash" &
+    /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/ground_truth_wrapper -p path_topic:=/ground_truth_path; exec bash" &
+fi
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=${ODOM_TOPIC} -p path_topic:=${ODOM_PATH_TOPIC}; exec bash" &
 
 if [[ "${SUBFOLDER}" == "csm" ]]; then
@@ -29,4 +34,4 @@ elif [[ "${SUBFOLDER}" == "genz" ]]; then
 fi
 
 # sleep 8
-ros2 service call /compr_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 1.0}"
+ros2 service call /compr_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 5.0}"

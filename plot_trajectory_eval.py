@@ -39,7 +39,7 @@ def rotate_coords(x: np.ndarray, y: np.ndarray, deg: float):
     return c * x - s * y, s * x + c * y
 
 
-def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool = False, match_lines: bool = False, rotate_deg: float = 0.0, traj_title: str = "Trajectories (error coloured)", est_label: str = "Estimated (colour = error)") -> None:
+def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool = False, match_lines: bool = False, rotate_deg: float = 0.0, traj_title: str = "Trajectories (error coloured)", est_label: str = "Estimated (colour = error)", colormap: str = "copper") -> None:
     matched = df[df["error_m"].notna()].reset_index(drop=True)
     t = matched["timestamp_s"].values
     t_rel = t - t[0]  # seconds from start
@@ -90,8 +90,9 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
     tail = df[df["x_est"].notna() & df["error_m"].isna()].sort_values("timestamp_s")
     # Sort GT by its own timestamps so the line follows the actual GT path order
     gt_line = df[df["timestamp_gt_s"].notna()].drop_duplicates(subset="timestamp_gt_s").sort_values("timestamp_gt_s")
-    gt_handle, = ax.plot(gt_line["x_gt"], gt_line["y_gt"], color=plt.cm.cividis(0.0), linewidth=3.0, zorder=2)
-    if match_lines:                                                     #plasma, cividis, viridis
+    cmap_obj = plt.get_cmap(colormap)
+    gt_handle, = ax.plot(gt_line["x_gt"], gt_line["y_gt"], color=cmap_obj(0.0), linewidth=3.0, zorder=2)
+    if match_lines:
         segments = np.stack(
             [np.column_stack([matched["x_est"], matched["y_est"]]),
              np.column_stack([matched["x_gt"],  matched["y_gt"]])],
@@ -101,12 +102,12 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
     est_pts = np.column_stack([matched["x_est"].values, matched["y_est"].values])
     est_segments = np.stack([est_pts[:-1], est_pts[1:]], axis=1)
     norm = plt.Normalize(matched["error_m"].min(), matched["error_m"].max())
-    est_lc = mc.LineCollection(est_segments, cmap="cividis", norm=norm, linewidths=3.0, zorder=3)
+    est_lc = mc.LineCollection(est_segments, cmap=colormap, norm=norm, linewidths=3.0, zorder=3)
     est_lc.set_array((matched["error_m"].values[:-1] + matched["error_m"].values[1:]) / 2)
     ax.add_collection(est_lc)
     sc = ax.scatter(
         matched["x_est"], matched["y_est"],
-        c=matched["error_m"], cmap="cividis", norm=norm,
+        c=matched["error_m"], cmap=colormap, norm=norm,
         s=4, linewidths=0, zorder=4,
     )    # Draw post-cutoff estimated tail (no pairing) in gray
     if not tail.empty:
@@ -124,7 +125,7 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
     n_dots = 6
     est_dots = tuple(
         plt.Line2D([], [], marker="o", linestyle="None", markersize=7,
-                   color=plt.cm.cividis(i / (n_dots - 1)))
+                   color=cmap_obj(i / (n_dots - 1)))
         for i in range(n_dots)
     )
     ax.legend(
@@ -134,7 +135,8 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
         fontsize=15,
     )
     ax.set_aspect("equal")
-    # ax.set_xlim(-20, 20) #onlz for ralf
+    # ax.set_xlim(-20, 20) #only for ralf
+    # ax.set_xlim(-2, 2) #only for eight kobuki map
     ax.grid(True, linewidth=0.4)
     ax.tick_params(labelsize=24)
 
@@ -220,6 +222,12 @@ def main() -> None:
         default="Estimated (colour = error)",
         help="Legend label for the estimated trajectory (default: 'Estimated (colour = error)').",
     )
+    parser.add_argument(
+        "--colormap",
+        metavar="CMAP",
+        default="copper",
+        help="Matplotlib colormap for the estimated trajectory (default: copper).",
+    )
     args = parser.parse_args()
 
     csv_path = os.path.abspath(args.csv_path)
@@ -228,7 +236,7 @@ def main() -> None:
         sys.exit(1)
 
     df = load_csv(csv_path)
-    plot(df, csv_path, args.save, separate=args.separate, match_lines=args.match_lines, rotate_deg=args.rotate, traj_title=args.traj_title, est_label=args.est_label)
+    plot(df, csv_path, args.save, separate=args.separate, match_lines=args.match_lines, rotate_deg=args.rotate, traj_title=args.traj_title, est_label=args.est_label, colormap=args.colormap)
 
 
 if __name__ == "__main__":

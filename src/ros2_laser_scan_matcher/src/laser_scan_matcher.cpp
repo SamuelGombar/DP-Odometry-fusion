@@ -247,6 +247,7 @@ LaserScanMatcher::LaserScanMatcher() : Node("laser_scan_matcher"), initialized_(
   prev_fusion_.setIdentity();
   imu_orientation_.setValue(0.0, 0.0, 0.0, 1.0);
   imu_received_ = false;
+  imu_yaw_offset_ = 0.0;
   imu_msg_count_ = 0;
   has_last_odom_msg_ = false;
   last_scan_publish_time_ = this->now();
@@ -303,13 +304,17 @@ void LaserScanMatcher::createCache (const sensor_msgs::msg::LaserScan::SharedPtr
 	
 void LaserScanMatcher::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
 {
-  imu_orientation_.setValue(
+  tf2::Quaternion q(
     msg->orientation.x,
     msg->orientation.y,
     msg->orientation.z,
     msg->orientation.w
   );
-  imu_received_ = true;
+  if (!imu_received_) {
+    imu_yaw_offset_ = tf2::getYaw(q);
+    imu_received_ = true;
+  }
+  imu_orientation_ = q;
 }
 
 void LaserScanMatcher::wheel_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
@@ -572,11 +577,11 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
       // fusion_ = fusion_ * correction;
     }
 
-    // Override rotation with absolute IMU yaw
+    // Override rotation with absolute IMU yaw (zeroed at startup)
     if (imu_received_) {
-      double imu_yaw = tf2::getYaw(imu_orientation_);
+      double imu_yaw = tf2::getYaw(imu_orientation_) - imu_yaw_offset_;
       tf2::Quaternion imu_q;
-      imu_q.setRPY(0.0, 0.0, optitrack_ ? imu_yaw + M_PI + M_PI/2 - M_PI/8 : imu_yaw);
+      imu_q.setRPY(0.0, 0.0, imu_yaw);
       fusion_.setRotation(imu_q);
     }
 

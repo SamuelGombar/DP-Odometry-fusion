@@ -45,8 +45,9 @@ public:
         auto out = *msg;
         out.header.frame_id = "base_laser";
         out.header.stamp = stamp;
-        for (auto & r : out.ranges)
-          if (r > 1.5f) r = std::numeric_limits<float>::infinity();
+        // obmedzenie lucov
+        // for (auto & r : out.ranges)
+        //   if (r > 4.0f) r = std::numeric_limits<float>::infinity();
         pub_->publish(out);
       });
   }

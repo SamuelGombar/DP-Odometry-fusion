@@ -90,7 +90,7 @@ Visualization Manager:
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
       Line Style: Billboards
-      Line Width: 0.009999999776482582
+      Line Width: 0.05000000074505806
       Name: Wheel
       Offset:
         X: 0
@@ -118,7 +118,7 @@ Visualization Manager:
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
       Line Style: Billboards
-      Line Width: 0.009999999776482582
+      Line Width: 0.05000000074505806
       Name: Optitrack
       Offset:
         X: 0
@@ -146,7 +146,7 @@ Visualization Manager:
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
       Line Style: Billboards
-      Line Width: 0.009999999776482582
+      Line Width: 0.05000000074505806
       Name: Kin
       Offset:
         X: 0
@@ -211,25 +211,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 6.908842086791992
+      Distance: 8.73196029663086
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 2.3242411613464355
-        Y: 1.133662462234497
-        Z: -0.010184597223997116
+        X: 0.8951935172080994
+        Y: 0.44737499952316284
+        Z: -0.002786424243822694
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5597963333129883
+      Pitch: 1.5397963523864746
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.5803972482681274
+      Yaw: 4.715423107147217
     Saved: ~
 Window Geometry:
   Displays:

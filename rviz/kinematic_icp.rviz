@@ -25,7 +25,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: Local Map
 Visualization Manager:
   Class: ""
   Displays:
@@ -168,7 +168,7 @@ Visualization Manager:
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
       Line Style: Billboards
-      Line Width: 0.10000000149011612
+      Line Width: 0.05000000074505806
       Name: Wheel Path
       Offset:
         X: 0
@@ -196,7 +196,7 @@ Visualization Manager:
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
       Line Style: Billboards
-      Line Width: 0.10000000149011612
+      Line Width: 0.05000000074505806
       Name: Kin-ICP Path
       Offset:
         X: 0
@@ -224,7 +224,7 @@ Visualization Manager:
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
       Line Style: Billboards
-      Line Width: 0.10000000149011612
+      Line Width: 0.05000000074505806
       Name: Ground Truth
       Offset:
         X: 0
@@ -429,16 +429,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 21.420743942260742
+      Distance: 9.524288177490234
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 2.5570051670074463
-        Y: 3.853971242904663
-        Z: 0.539200484752655
+        X: 2.2469987869262695
+        Y: 1.260837435722351
+        Z: 0.5936563611030579
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

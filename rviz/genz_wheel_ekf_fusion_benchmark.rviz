@@ -8,6 +8,7 @@ Panels:
         - /Status1
         - /GenZ1/Shape1
         - /EKF1/Shape1
+        - /Local Map1
         - /Point Cloud1/Topic1
       Splitter Ratio: 0.5088235139846802
     Tree Height: 707
@@ -210,7 +211,7 @@ Visualization Manager:
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
       Line Style: Billboards
-      Line Width: 0.10000000149011612
+      Line Width: 0.05000000074505806
       Name: Wheel Path
       Offset:
         X: 0
@@ -238,7 +239,7 @@ Visualization Manager:
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
       Line Style: Billboards
-      Line Width: 0.10000000149011612
+      Line Width: 0.05000000074505806
       Name: GenZ path
       Offset:
         X: 0
@@ -266,7 +267,7 @@ Visualization Manager:
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
       Line Style: Billboards
-      Line Width: 0.10000000149011612
+      Line Width: 0.05000000074505806
       Name: EKF Path
       Offset:
         X: 0
@@ -294,7 +295,7 @@ Visualization Manager:
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
       Line Style: Billboards
-      Line Width: 0.10000000149011612
+      Line Width: 0.05000000074505806
       Name: Ground Truth
       Offset:
         X: 0
@@ -401,7 +402,7 @@ Visualization Manager:
       Position Transformer: XYZ
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.029999999329447746
+      Size (m): 0.019999999552965164
       Style: Flat Squares
       Topic:
         Depth: 5
@@ -491,25 +492,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 5.673960208892822
+      Distance: 7.222794055938721
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 2.3320834636688232
-        Y: 0.8255293965339661
-        Z: 0.6027876138687134
+        X: 0.44338667392730713
+        Y: 1.1596304178237915
+        Z: 0.6024408340454102
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5498000383377075
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.570389986038208
+      Yaw: 1.5853899717330933
     Saved: ~
 Window Geometry:
   Displays:

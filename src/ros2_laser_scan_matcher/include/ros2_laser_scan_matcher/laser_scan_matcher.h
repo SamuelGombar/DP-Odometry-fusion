@@ -120,6 +120,7 @@ private:
 
   tf2::Quaternion imu_orientation_;
   bool imu_received_;
+  double imu_yaw_offset_;
   int imu_msg_count_;
 
   sm_params input_;
