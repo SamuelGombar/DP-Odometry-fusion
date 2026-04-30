@@ -1,10 +1,10 @@
-BAG_NAME=opti_structured_current_conf_4m
-KOBUKI=true
+BAG_NAME=Candy_4m_4_0075
+KOBUKI=false
 MODE=temporal
 SAVE_DIR=/home/samuelg9/Documents/Skola/DP/latex/img
-CUTOFF_TS=9999999999     #9999999999 for no cutoff  
-TIMESTAMP_OFFSET=0.0
-GT_BAG=/home/samuelg9/ros2_ws_host/recordings/output/kobuki/csm/opti_basic_current_conf
+CUTOFF_TS=1777204630     #9999999999 for no cutoff  
+TIMESTAMP_OFFSET=721.526661
+GT_BAG=/home/samuelg9/ros2_ws_host/recordings/output/genz/Candy_7m
 
 echo "Select odometry pipeline:"
 echo "  1) CSM"
@@ -14,10 +14,10 @@ echo "  4) Pure CSM"
 read -rp "Enter choice [1-4]: " ODOM_CHOICE
 
 case "$ODOM_CHOICE" in
-  1) ODOM_TYPE="csm";      ODOM_TOPIC="/fusion_odometry";              EST_LABEL="CSM";          COLORMAP="cividis" ;;      # /odom_icp
+  1) ODOM_TYPE="csm";      ODOM_TOPIC="/fusion_odometry";              EST_LABEL='P$_L$ICP';          COLORMAP="cividis" ;;      # /odom_icp
   2) ODOM_TYPE="genz"; ODOM_TOPIC="/odometry/filtered";           EST_LABEL="GenZ-ICP";     COLORMAP="plasma" ;;     #/genz/odometry
   3) ODOM_TYPE="kin";      ODOM_TOPIC="/kinematic_icp/lidar_odometry"; EST_LABEL="Kinematic ICP"; COLORMAP="viridis" ;;
-  4) ODOM_TYPE="csm"; ODOM_TOPIC="/odom_icp";                    EST_LABEL="pure CSM";     COLORMAP="copper" ;;
+  4) ODOM_TYPE="csm"; ODOM_TOPIC="/odom_icp";                    EST_LABEL='pôvodný P$_L$ICP';     COLORMAP="copper" ;;
   *)
     echo "Invalid choice. Exiting."
     exit 1
@@ -46,7 +46,7 @@ else
     --mode ${MODE} \
     --cutoff-timestamp "$CUTOFF_TS" \
     --timestamp-offset "$TIMESTAMP_OFFSET" \
-    # --gt-bag ${GT_BAG} \
+    --gt-bag ${GT_BAG} \
     #-6.5
     #  --hybrid-fraction 1 0.09    #0 - temporal first     
 fi
@@ -58,8 +58,8 @@ python3 /home/samuelg9/ros2_ws_host/plot_trajectory_eval.py /home/samuelg9/ros2_
   --traj-title "$TRAJ_TITLE" \
   --est-label "$EST_LABEL" \
   --colormap "$COLORMAP" \
-  --save "${SAVE_DIR}/${ODOM_TYPE}_$(echo "$BAG_NAME" | cut -d'_' -f1-2)_${MODE}.png" \
   # --cutoff-timestamp "$CUTOFF_TS" \
+  # --save "${SAVE_DIR}/${ODOM_TYPE}_$(echo "$BAG_NAME" | cut -d'_' -f1-2)_${MODE}.png" \
 
 
 

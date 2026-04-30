@@ -56,17 +56,19 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
     )
 
     if separate:
+        fig_xy, (ax_x, ax_y) = plt.subplots(2, 1, figsize=(14, 8))  # x/y vs time combined
         figs_axes = [
             plt.subplots(1, 1, figsize=(11, 8)), #(11, 8) pre Frodo, (6, 8) 
             plt.subplots(1, 1, figsize=(14, 8)),
             plt.subplots(1, 1, figsize=(14, 8)),
+            (fig_xy, None),  # placeholder — axes handled separately
         ]
-        axes = [fa[1] for fa in figs_axes]
-        for fa in figs_axes:
+        axes = [figs_axes[0][1], figs_axes[1][1], figs_axes[2][1], ax_x, ax_y]
+        for fa in figs_axes[:3]:
             pass  # fa[0].suptitle(suptitle, fontsize=10)
         fig = figs_axes[0][0]  # used only for colorbar reference below
     else:
-        fig, _axes = plt.subplots(1, 3, figsize=(16, 5))
+        fig, _axes = plt.subplots(1, 5, figsize=(26, 5))
         axes = list(_axes)
         # fig.suptitle(suptitle, fontsize=11)
 
@@ -166,17 +168,43 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
     ax.grid(True, linewidth=0.4, axis="y")
     ax.tick_params(labelsize=24)
 
+    # --- 4. x vs time ---
+    ax = axes[3]
+    ax.plot(t_rel, matched["x_est"].values, color="red", linewidth=3.6, label=est_label)
+    ax.plot(t_rel, matched["x_gt"].values, color=cmap_obj(0.0), linewidth=3.6, label="Referenčná trajektória")
+    ax.set_ylabel("x (m)", fontsize=26)
+    ax.set_title(f"{est_label} - {traj_title}", fontsize=24)
+    ax.legend(fontsize=15)
+    ax.grid(True, linewidth=0.4)
+    ax.tick_params(labelsize=24)
+    ax.tick_params(axis="x", labelbottom=False)
+
+    # --- 5. y vs time ---
+    ax = axes[4]
+    ax.plot(t_rel, matched["y_est"].values, color="#00e000", linewidth=3.6, label=est_label)
+    ax.plot(t_rel, matched["y_gt"].values, color=cmap_obj(0.0), linewidth=3.6, label="Referenčná trajektória")
+    ax.set_xlabel("Čas (s)", fontsize=26)
+    ax.set_ylabel("y (m)", fontsize=26)
+    ax.legend(fontsize=15)
+    ax.grid(True, linewidth=0.4)
+    ax.tick_params(labelsize=24)
+
+    if separate:
+        fig_xy.tight_layout()
     plt.tight_layout()
 
     if save_path:
         if separate:
             base, ext = os.path.splitext(save_path)
             ext = ext or ".png"
-            suffixes = ["", "_err"]
-            for i, suffix in enumerate(suffixes):
+            # figs_axes[3] is the combined x/y figure
+            for i, suffix in enumerate(["", "_err", "_dist"]):
                 out = f"{base}{suffix}{ext}"
                 figs_axes[i][0].savefig(out, dpi=150, bbox_inches="tight")
                 print(f"Saved to: {os.path.abspath(out)}")
+            out_xy = f"{base}_xy{ext}"
+            fig_xy.savefig(out_xy, dpi=150, bbox_inches="tight")
+            print(f"Saved to: {os.path.abspath(out_xy)}")
         else:
             fig.savefig(save_path, dpi=150, bbox_inches="tight")
             print(f"Saved to: {os.path.abspath(save_path)}")
