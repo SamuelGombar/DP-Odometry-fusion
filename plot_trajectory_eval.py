@@ -42,7 +42,11 @@ def rotate_coords(x: np.ndarray, y: np.ndarray, deg: float):
 def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool = False, match_lines: bool = False, rotate_deg: float = 0.0, traj_title: str = "Trajectories (error coloured)", est_label: str = "Estimated (colour = error)", colormap: str = "copper") -> None:
     matched = df[df["error_m"].notna()].reset_index(drop=True)
     t = matched["timestamp_s"].values
-    t_rel = t - t[0]  # seconds from start
+    t_gt = matched["timestamp_gt_s"].values
+    common_t0 = min(t[0], t_gt[0])
+    t_est_rel = t - common_t0       # est timestamps relative to common origin
+    t_gt_rel  = t_gt - common_t0   # GT  timestamps relative to common origin
+    t_rel = t_est_rel              # used for error-over-time plot (est axis)
 
     rmse = float(np.sqrt(np.mean(matched["error_m"] ** 2)))
     mean_e = float(matched["error_m"].mean())
@@ -137,7 +141,7 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
         fontsize=15,
     )
     ax.set_aspect("equal")
-    # ax.set_xlim(-20, 20) #only for ralf
+    ax.set_xlim(-20, 20) #only for ralf
     # ax.set_xlim(-2, 2) #only for eight kobuki map
     ax.grid(True, linewidth=0.4)
     ax.tick_params(labelsize=24)
@@ -150,7 +154,7 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
     ax.axhline(std_e, color="tab:green", linestyle="-.", linewidth=2.5, label=f"Smerodajná odch. {std_e:.4f} m")
     ax.set_xlabel("Čas (s)", fontsize=26)
     ax.set_ylabel("Error (m)", fontsize=26)
-    ax.set_title("Chyba polôh v čase", fontsize=24)
+    ax.set_title(f"Chyba polôh v čase: {est_label} - {traj_title}", fontsize=24)
     ax.legend(fontsize=15)
     ax.grid(True, linewidth=0.4)
     ax.tick_params(labelsize=24)
@@ -163,15 +167,16 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
     ax.axvline(std_e, color="tab:green", linestyle="-.", linewidth=2.5, label=f"Smerodajná odch. {std_e:.4f} m")
     ax.set_xlabel("Error (m)", fontsize=26)
     ax.set_ylabel("Počet", fontsize=26)
-    ax.set_title("Distribúcia chyby", fontsize=24)
+    ax.set_title(f"Distribúcia chyby: {est_label} - {traj_title}", fontsize=24)
     ax.legend(fontsize=15)
     ax.grid(True, linewidth=0.4, axis="y")
     ax.tick_params(labelsize=24)
 
     # --- 4. x vs time ---
+    # Each trajectory is plotted at its own timestamps.
     ax = axes[3]
-    ax.plot(t_rel, matched["x_est"].values, color="red", linewidth=3.6, label=est_label)
-    ax.plot(t_rel, matched["x_gt"].values, color=cmap_obj(0.0), linewidth=3.6, label="Referenčná trajektória")
+    ax.plot(t_est_rel, matched["x_est"].values, color="red", linewidth=3.6, label=est_label)
+    ax.plot(t_gt_rel,  matched["x_gt"].values,  color=cmap_obj(0.0), linewidth=3.6, label="Referenčná trajektória")
     ax.set_ylabel("x (m)", fontsize=26)
     ax.set_title(f"{est_label} - {traj_title}", fontsize=24)
     ax.legend(fontsize=15)
@@ -181,8 +186,8 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
 
     # --- 5. y vs time ---
     ax = axes[4]
-    ax.plot(t_rel, matched["y_est"].values, color="#00e000", linewidth=3.6, label=est_label)
-    ax.plot(t_rel, matched["y_gt"].values, color=cmap_obj(0.0), linewidth=3.6, label="Referenčná trajektória")
+    ax.plot(t_est_rel, matched["y_est"].values, color="#00e000", linewidth=3.6, label=est_label)
+    ax.plot(t_gt_rel,  matched["y_gt"].values,  color=cmap_obj(0.0), linewidth=3.6, label="Referenčná trajektória")
     ax.set_xlabel("Čas (s)", fontsize=26)
     ax.set_ylabel("y (m)", fontsize=26)
     ax.legend(fontsize=15)

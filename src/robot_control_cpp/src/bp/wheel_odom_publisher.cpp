@@ -24,7 +24,8 @@ public:
       "/amrapi/sensor/velocity", 10,
       std::bind(&WheelOdomPublisher::velocity_callback, this, std::placeholders::_1));
 
-    last_time_ = this->now();
+    last_time_ = rclcpp::Time(0, 0, RCL_ROS_TIME);
+    start_time_ = rclcpp::Time(0, 0, RCL_ROS_TIME);
 
     publishInitialOdom();
 
@@ -41,12 +42,19 @@ private:
   void velocity_callback(const amrapi_msgs::msg::VehicleVelocityMsg::SharedPtr msg)
   {
     auto current_time = this->now();
+    if (last_time_.nanoseconds() == 0) {
+      last_time_ = current_time;
+      start_time_ = current_time;
+      return;
+    }
     double dt = (current_time - last_time_).seconds();
     last_time_ = current_time;
 
-    if (dt <= 0.0 || dt > 1.0) {
+    if ((current_time - start_time_).seconds() < 10.0 && (dt <= 0.0 || dt > 1.0)) {
       return;
     }
+
+    if ((current_time - start_time_).seconds() < 10.0) std::cout << "IM IN EFFECT" << std::endl;
 
     double v = msg->linear;
     double w = -msg->angular;
@@ -197,6 +205,7 @@ private:
   rclcpp::TimerBase::SharedPtr keepalive_timer_;
   rclcpp::Time last_time_;
   rclcpp::Time last_pub_time_;
+  rclcpp::Time start_time_;
   double x_, y_, theta_;
   bool first_odom_;
   double offset_x_, offset_y_, offset_theta_;

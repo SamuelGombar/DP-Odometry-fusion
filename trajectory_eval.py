@@ -630,10 +630,13 @@ def main() -> None:
     print(f"    {args.gt_topic} t0  : {gt_t0_ns  / 1e9:.6f} s")
     print()
 
-    if args.timestamp_offset != 0.0:
-        offset_ns = int(args.timestamp_offset * 1_000_000_000)
+    # Auto-compute offset from first-message difference when not explicitly provided.
+    effective_offset = args.timestamp_offset if args.timestamp_offset != 0.0 else -dt_first_s
+    if effective_offset != 0.0:
+        offset_ns = int(effective_offset * 1_000_000_000)
         est_poses = [(t + offset_ns, x, y) for t, x, y in est_poses]
-        print(f"Timestamp offset applied: {args.timestamp_offset:+.3f} s ({offset_ns:+d} ns) to estimated poses")
+        source = "manual" if args.timestamp_offset != 0.0 else "auto (negated first-msg diff)"
+        print(f"Timestamp offset applied: {effective_offset:+.6f} s ({offset_ns:+d} ns) to estimated poses [{source}]")
 
     if args.cutoff_timestamp is not None:
         cutoff_ns = int(args.cutoff_timestamp * 1_000_000_000)
