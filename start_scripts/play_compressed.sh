@@ -1,19 +1,19 @@
-BAG_NAME="Candy_4m_0075_regul_true_4"
-SUBFOLDER=kin
+BAG_NAME="Frodo_7m_03"
+SUBFOLDER=csm
 KOBUKI=false
 
 BAG_PATH="/home/samuelg9/ros2_ws_host/recordings/output/${SUBFOLDER}/${BAG_NAME}"
 
-# ODOM_TOPIC="/fusion_odometry"
-# ODOM_PATH_TOPIC="/fusion_odometry_path"
+ODOM_TOPIC="/fusion_odometry"
+ODOM_PATH_TOPIC="/fusion_odometry_path"
 # ODOM_TOPIC="/genz/odometry"
 # ODOM_PATH_TOPIC="/genz/trajectory"
-ODOM_TOPIC="/kinematic_icp/lidar_odometry"
-ODOM_PATH_TOPIC="/kinematic_icp/lidar_odometry_path"
+# ODOM_TOPIC="/kinematic_icp/lidar_odometry"
+# ODOM_PATH_TOPIC="/kinematic_icp/lidar_odometry_path"
 
-# RVIZ="csm_fusion_benchmark"
+RVIZ="csm_fusion_benchmark"
 # RVIZ="genz_wheel_ekf_fusion_benchmark"
-RVIZ="kinematic_icp"
+# RVIZ="kinematic_icp"
 
 /usr/bin/gnome-terminal --tab -- bash -c "rviz2 -d /home/samuelg9/ros2_ws_host/rviz/${RVIZ}.rviz; exec bash" &
 
@@ -34,4 +34,4 @@ elif [[ "${SUBFOLDER}" == "genz" ]]; then
 fi
 
 # sleep 8
-ros2 service call /compr_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 50.0}"
+ros2 service call /compr_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 25.0}"

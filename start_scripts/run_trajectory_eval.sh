@@ -1,10 +1,10 @@
-BAG_NAME=Ralf_7m_0075_regul_0-0001_4
+BAG_NAME=Candy_7m_0075_regul_true_4
 KOBUKI=false
 MODE=temporal
-SAVE_DIR=/home/samuelg9/Documents/Skola/DP/latex/img   #/home/samuelg9/Desktop/kin_revisited
-GT_BAG=/home/samuelg9/ros2_ws_host/recordings/output/genz/Ralf_4m_4_0075
-CUTOFF_TS=1777213240     #9999999999 for no cutoff 
-SAVE_PREFIX="" #append "_" at the end if not empty
+SAVE_DIR=/home/samuelg9/Desktop/kin_revisited   #/home/samuelg9/Documents/Skola/DP/latex/img
+GT_BAG=/home/samuelg9/ros2_ws_host/recordings/output/genz/Candy_7m
+CUTOFF_TS=1777204630     #9999999999 for no cutoff 
+SAVE_PREFIX="regul_" #append "_" at the end if not empty
 
 echo "Select odometry pipeline:"
 echo "  1) CSM"
@@ -14,10 +14,10 @@ echo "  4) Pure CSM"
 read -rp "Enter choice [1-4]: " ODOM_CHOICE
 
 case "$ODOM_CHOICE" in
-  1) ODOM_TYPE="csm";      ODOM_TOPIC="/fusion_odometry";              EST_LABEL='P$_L$ICP';          COLORMAP="cividis" ;;      # /odom_icp
+  1) ODOM_TYPE="csm";      ODOM_TOPIC="/fusion_odometry";              EST_LABEL='P$_L$ICP';          COLORMAP="copper" ;;      # /odom_icp
   2) ODOM_TYPE="genz"; ODOM_TOPIC="/odometry/filtered";           EST_LABEL="GenZ-ICP";     COLORMAP="plasma" ;;     #/genz/odometry
   3) ODOM_TYPE="kin";      ODOM_TOPIC="/kinematic_icp/lidar_odometry"; EST_LABEL="Kinematic ICP"; COLORMAP="viridis" ;;
-  4) ODOM_TYPE="csm"; ODOM_TOPIC="/odom_icp";                    EST_LABEL='pôvodný P$_L$ICP';     COLORMAP="copper" ;;
+  4) ODOM_TYPE="csm"; ODOM_TOPIC="/odom_icp";                    EST_LABEL='pôvodný P$_L$ICP';     COLORMAP="cividis";    SAVE_PREFIX="pure_" ;;
   *)
     echo "Invalid choice. Exiting."
     exit 1

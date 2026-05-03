@@ -1,6 +1,6 @@
-BAG_NAME="Candy_4m"
-SUFFIX="_regul_true_1"    # "_0075_regul_0-0001_15"
-RECORD=true
+BAG_NAME="Frodo_7m"
+SUFFIX="_0075_regul_0-0001_1"    # "_0075_regul_0-0001_15"
+RECORD=false
 
 echo "Select odometry pipeline:"
 echo "  1) CSM"

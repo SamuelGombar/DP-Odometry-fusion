@@ -63,8 +63,8 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
         fig_xy, (ax_x, ax_y) = plt.subplots(2, 1, figsize=(14, 8))  # x/y vs time combined
         figs_axes = [
             plt.subplots(1, 1, figsize=(11, 8)), #(11, 8) pre Frodo, (6, 8) 
-            plt.subplots(1, 1, figsize=(14, 8)),
-            plt.subplots(1, 1, figsize=(14, 8)),
+            plt.subplots(1, 1, figsize=(14, 11)),
+            plt.subplots(1, 1, figsize=(14, 11)),
             (fig_xy, None),  # placeholder — axes handled separately
         ]
         axes = [figs_axes[0][1], figs_axes[1][1], figs_axes[2][1], ax_x, ax_y]
@@ -141,8 +141,11 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
         fontsize=15,
     )
     ax.set_aspect("equal")
-    ax.set_xlim(-20, 20) #only for ralf
-    # ax.set_xlim(-2, 2) #only for eight kobuki map
+
+    if traj_title.lower().startswith("sigma"):
+        ax.set_xlim(-20, 20)
+    elif traj_title.lower().startswith("eight"):
+        ax.set_xlim(-2, 2)
     ax.grid(True, linewidth=0.4)
     ax.tick_params(labelsize=24)
 
@@ -155,7 +158,7 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
     ax.set_xlabel("Čas (s)", fontsize=26)
     ax.set_ylabel("Error (m)", fontsize=26)
     ax.set_title(f"Chyba polôh v čase: {est_label} - {traj_title}", fontsize=24)
-    ax.legend(fontsize=15)
+    ax.legend(fontsize=24)
     ax.grid(True, linewidth=0.4)
     ax.tick_params(labelsize=24)
 
@@ -168,7 +171,7 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
     ax.set_xlabel("Error (m)", fontsize=26)
     ax.set_ylabel("Počet", fontsize=26)
     ax.set_title(f"Distribúcia chyby: {est_label} - {traj_title}", fontsize=24)
-    ax.legend(fontsize=15)
+    ax.legend(fontsize=24)
     ax.grid(True, linewidth=0.4, axis="y")
     ax.tick_params(labelsize=24)
 
