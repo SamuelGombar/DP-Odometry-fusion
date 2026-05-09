@@ -551,19 +551,19 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
     static double corr_threshold = 0.15;
     // std::cout << ratio << std::endl;
     if ((ratio < corr_threshold)) {
-      // if (wheel_pose_diff.getOrigin().length() > 0.01) {
-        // std::cout << "CORRECTED: "<< ratio << std::endl;
-        // auto correction = lidar_pose_diff.inverse() * wheel_pose_diff;
-        // // Apply only the translation part, preserve current rotation
-        // tf2::Transform translation_only;
-        // translation_only.setOrigin(correction.getOrigin());
-        // translation_only.setRotation(tf2::Quaternion::getIdentity());
-        // fusion_ = fusion_ * translation_only;
-      std::cout << "CORRECTED: "<< ratio << std::endl;
       if (wheel_pose_diff.getOrigin().length() > 0.01) {
-        // auto correction = wheel_pose_diff;
+        std::cout << "CORRECTED: "<< ratio << std::endl;
         auto correction = lidar_pose_diff.inverse() * wheel_pose_diff;
-        fusion_ = fusion_ * correction;
+        // Apply only the translation part, preserve current rotation
+        tf2::Transform translation_only;
+        translation_only.setOrigin(correction.getOrigin());
+        translation_only.setRotation(tf2::Quaternion::getIdentity());
+        fusion_ = fusion_ * translation_only;
+      // std::cout << "CORRECTED: "<< ratio << std::endl;
+      // if (wheel_pose_diff.getOrigin().length() > 0.01) {
+      //   // auto correction = wheel_pose_diff;
+      //   auto correction = lidar_pose_diff.inverse() * wheel_pose_diff;
+      //   fusion_ = fusion_ * correction;
       }
     }
     else if (lidar_sum_poses.getOrigin().getX() * wheel_sum_poses.getOrigin().getX() < 0) {

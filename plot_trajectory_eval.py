@@ -142,6 +142,7 @@ def plot(df: pd.DataFrame, csv_path: str, save_path: str | None, separate: bool 
     )
     ax.set_aspect("equal")
 
+    ax.set_xlim(-15, 15)
     if traj_title.lower().startswith("sigma"):
         ax.set_xlim(-20, 20)
     elif traj_title.lower().startswith("eight"):

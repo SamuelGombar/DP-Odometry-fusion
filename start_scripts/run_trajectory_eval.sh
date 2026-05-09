@@ -1,10 +1,10 @@
-BAG_NAME=Candy_7m_0075_regul_true_4
+BAG_NAME=Ralf_4m_4_0075_noimu
 KOBUKI=false
 MODE=temporal
-SAVE_DIR=/home/samuelg9/Desktop/kin_revisited   #/home/samuelg9/Documents/Skola/DP/latex/img
-GT_BAG=/home/samuelg9/ros2_ws_host/recordings/output/genz/Candy_7m
-CUTOFF_TS=1777204630     #9999999999 for no cutoff 
-SAVE_PREFIX="regul_" #append "_" at the end if not empty
+SAVE_DIR=/home/samuelg9/Desktop/genz_idk   #/home/samuelg9/Documents/Skola/DP/latex/img
+GT_BAG=/home/samuelg9/ros2_ws_host/recordings/output/genz/Ralf_4m_4_0075
+CUTOFF_TS=1777213240     #9999999999 for no cutoff 
+SAVE_PREFIX="noimu" #append "_" at the end if not empty
 
 echo "Select odometry pipeline:"
 echo "  1) CSM"
@@ -39,27 +39,26 @@ if [ "$KOBUKI" = "true" ]; then
     --interpolate-gt 0.5 
 else
   python3 /home/samuelg9/ros2_ws_host/trajectory_eval.py \
-    /home/samuelg9/ros2_ws_host/recordings/output/${ODOM_TYPE}/${BAG_NAME} \
+    /home/samuelg9/ros2_ws_host/recordings/output/${ODOM_TYPE}/backup/${BAG_NAME} \
     --odom-topic ${ODOM_TOPIC} \
     --output-csv /home/samuelg9/ros2_ws_host/results.csv \
-    --align \
     --mode ${MODE} \
     --cutoff-timestamp "$CUTOFF_TS" \
     --gt-bag ${GT_BAG} \
     #-6.5
+        # --align \
     #  --hybrid-fraction 1 0.09    #0 - temporal first     
 fi
 mkdir -p "$SAVE_DIR"
 python3 /home/samuelg9/ros2_ws_host/plot_trajectory_eval.py /home/samuelg9/ros2_ws_host/results.csv \
   --separate \
-  --match-lines \
   --rotate -180 \
   --traj-title "$TRAJ_TITLE" \
   --est-label "$EST_LABEL" \
   --colormap "$COLORMAP" \
   --save "${SAVE_DIR}/${SAVE_PREFIX}${ODOM_TYPE}_$(echo "$BAG_NAME" | cut -d'_' -f1-2)_${MODE}.png" \
   # --cutoff-timestamp "$CUTOFF_TS" \
-
+  # --match-lines \
 
 # MODE=spatial
 # if [ "$KOBUKI" = "true" ]; then

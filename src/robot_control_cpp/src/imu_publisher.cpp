@@ -60,6 +60,7 @@ private:
         double adj_roll = roll - offset_roll_;
         double adj_pitch = pitch - offset_pitch_;
         double adj_yaw = yaw - offset_yaw_;
+        adj_yaw = std::atan2(std::sin(adj_yaw), std::cos(adj_yaw)); // normalize to [-π, π]
 
         tf2::Quaternion q;
         q.setRPY(adj_roll, adj_pitch, adj_yaw);
