@@ -8,7 +8,7 @@
 
 class GyroPublisher : public rclcpp::Node {
 public:
-    GyroPublisher() : Node("gyro_publisher"), prev_angle_x_(0.0), prev_angle_y_(0.0), prev_angle_z_(0.0), prev_timestamp_(0.0), first_(true), offset_roll_(0.0), offset_pitch_(0.0), offset_yaw_(0.0) {
+    GyroPublisher() : Node("gyro_publisher"), prev_angle_x_(0.0), prev_angle_y_(0.0), prev_angle_z_(0.0), prev_timestamp_(0.0), first_(true), offset_roll_(0.0), offset_pitch_(0.0), offset_yaw_(0.0), prev_adj_yaw_(0.0), yaw_unwrap_offset_(0.0) {
         // Create subscription to hw_layer IMU topic
         imu_subscription_ = this->create_subscription<hw_layer_msgs::msg::IMUMsg>(
             "/hw_layer/imu/sensor/data",
@@ -34,6 +34,8 @@ private:
     double prev_timestamp_;
     bool first_;
     double offset_roll_, offset_pitch_, offset_yaw_;
+    double prev_adj_yaw_;
+    double yaw_unwrap_offset_;
 
     void imu_callback(const hw_layer_msgs::msg::IMUMsg::SharedPtr msg) {
         // Create output Imu message
@@ -62,6 +64,13 @@ private:
         double adj_yaw = yaw - offset_yaw_;
         adj_yaw = std::atan2(std::sin(adj_yaw), std::cos(adj_yaw)); // normalize to [-π, π]
 
+        // Unwrap: detect ±2π jumps and apply cumulative correction
+        double diff = adj_yaw - prev_adj_yaw_;
+        if (diff > M_PI)       yaw_unwrap_offset_ -= 2.0 * M_PI;
+        else if (diff < -M_PI) yaw_unwrap_offset_ += 2.0 * M_PI;
+        prev_adj_yaw_ = adj_yaw;
+        adj_yaw += yaw_unwrap_offset_;
+
         tf2::Quaternion q;
         q.setRPY(adj_roll, adj_pitch, adj_yaw);
 
@@ -71,7 +80,7 @@ private:
         imu_msg.orientation.w = q.w();
 
         // Set orientation covariance (0.01 rad^2 diagonal, -1 means unknown)
-        imu_msg.orientation_covariance[8] = 0.01;
+        imu_msg.orientation_covariance[8] = 0.00000001;
 
         // Calculate angular velocity from angle differentiation
         double current_timestamp = msg->timestamp;

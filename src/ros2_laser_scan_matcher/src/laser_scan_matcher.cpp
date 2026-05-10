@@ -578,12 +578,12 @@ bool LaserScanMatcher::processScan(LDP& curr_ldp_scan, const rclcpp::Time& time)
     }
 
     // Override rotation with absolute IMU yaw (zeroed at startup)
-    if (imu_received_) {
-      double imu_yaw = tf2::getYaw(imu_orientation_) - imu_yaw_offset_;
-      tf2::Quaternion imu_q;
-      imu_q.setRPY(0.0, 0.0, imu_yaw);
-      fusion_.setRotation(imu_q);
-    }
+    // if (imu_received_) {
+    //   double imu_yaw = tf2::getYaw(imu_orientation_) - imu_yaw_offset_;
+    //   tf2::Quaternion imu_q;
+    //   imu_q.setRPY(0.0, 0.0, imu_yaw);
+    //   fusion_.setRotation(imu_q);
+    // }
 
     nav_msgs::msg::Odometry fusion_msg;
 

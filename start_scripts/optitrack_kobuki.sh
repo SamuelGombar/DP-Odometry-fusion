@@ -1,6 +1,6 @@
 BAG_NAME="opti_structured"
-SUFFIX="_current_conf"
-RECORD=false
+SUFFIX="_current_conf_plicp_noimu"
+RECORD=true
 
 echo "Select odometry pipeline:"
 echo "  1) CSM"

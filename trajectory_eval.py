@@ -509,12 +509,13 @@ def main() -> None:
     parser.add_argument(
         "--timestamp-offset",
         type=float,
-        default=0.0,
+        default=None,
         metavar="SECONDS",
         help=(
             "Shift estimated pose timestamps by this many seconds before matching "
             "(positive = est timestamps are behind GT, negative = ahead). "
-            "Only affects temporal and hybrid matching modes."
+            "Only affects temporal and hybrid matching modes. "
+            "Pass 0.0 to disable the automatic first-message offset entirely."
         ),
     )
     parser.add_argument(
@@ -595,8 +596,10 @@ def main() -> None:
         if args.mode == "spatial" and args.deduplicate:
             mode_label += " (deduplicate ON)"
     print(f"Mode       : {mode_label}")
-    if args.timestamp_offset != 0.0:
+    if args.timestamp_offset is not None:
         print(f"TS offset  : {args.timestamp_offset:+.3f} s (applied to estimated poses)")
+    else:
+        print(f"TS offset  : auto (will negate first-msg diff)")
     print()
 
     # --- Read bag(s) ---
@@ -631,12 +634,18 @@ def main() -> None:
     print()
 
     # Auto-compute offset from first-message difference when not explicitly provided.
-    effective_offset = args.timestamp_offset if args.timestamp_offset != 0.0 else -dt_first_s
+    if args.timestamp_offset is not None:
+        effective_offset = args.timestamp_offset
+        source = "manual"
+    else:
+        effective_offset = -dt_first_s
+        source = "auto (negated first-msg diff)"
     if effective_offset != 0.0:
         offset_ns = int(effective_offset * 1_000_000_000)
         est_poses = [(t + offset_ns, x, y) for t, x, y in est_poses]
-        source = "manual" if args.timestamp_offset != 0.0 else "auto (negated first-msg diff)"
         print(f"Timestamp offset applied: {effective_offset:+.6f} s ({offset_ns:+d} ns) to estimated poses [{source}]")
+    elif args.timestamp_offset is not None:
+        print("Timestamp offset: 0.0 s (auto-align disabled by explicit --timestamp-offset 0.0)")
 
     if args.cutoff_timestamp is not None:
         cutoff_ns = int(args.cutoff_timestamp * 1_000_000_000)
