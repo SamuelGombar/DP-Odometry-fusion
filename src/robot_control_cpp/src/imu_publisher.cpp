@@ -9,14 +9,12 @@
 class GyroPublisher : public rclcpp::Node {
 public:
     GyroPublisher() : Node("gyro_publisher"), prev_angle_x_(0.0), prev_angle_y_(0.0), prev_angle_z_(0.0), prev_timestamp_(0.0), first_(true), offset_roll_(0.0), offset_pitch_(0.0), offset_yaw_(0.0), prev_adj_yaw_(0.0), yaw_unwrap_offset_(0.0) {
-        // Create subscription to hw_layer IMU topic
         imu_subscription_ = this->create_subscription<hw_layer_msgs::msg::IMUMsg>(
             "/hw_layer/imu/sensor/data",
             rclcpp::SensorDataQoS(),
             std::bind(&GyroPublisher::imu_callback, this, std::placeholders::_1)
         );
 
-        // Create publisher for standard ROS Imu message
         imu_publisher_ = this->create_publisher<sensor_msgs::msg::Imu>(
             "/imu",
             rclcpp::SensorDataQoS()
@@ -38,15 +36,11 @@ private:
     double yaw_unwrap_offset_;
 
     void imu_callback(const hw_layer_msgs::msg::IMUMsg::SharedPtr msg) {
-        // Create output Imu message
         sensor_msgs::msg::Imu imu_msg;
 
-        // Set header
         imu_msg.header.stamp = this->get_clock()->now();
         imu_msg.header.frame_id = "imu_link";
 
-        // Convert euler angles (XYZ) to quaternion
-        // Using intrinsic XYZ (roll-pitch-yaw) convention
         double roll = msg->angle_x;
         double pitch = msg->angle_y;
         double yaw = msg->angle_z;
@@ -58,13 +52,11 @@ private:
             first_ = false;
         }
 
-        // Subtract offset to zero orientation at startup
         double adj_roll = roll - offset_roll_;
         double adj_pitch = pitch - offset_pitch_;
         double adj_yaw = yaw - offset_yaw_;
-        adj_yaw = std::atan2(std::sin(adj_yaw), std::cos(adj_yaw)); // normalize to [-π, π]
+        adj_yaw = std::atan2(std::sin(adj_yaw), std::cos(adj_yaw));
 
-        // Unwrap: detect ±2π jumps and apply cumulative correction
         double diff = adj_yaw - prev_adj_yaw_;
         if (diff > M_PI)       yaw_unwrap_offset_ -= 2.0 * M_PI;
         else if (diff < -M_PI) yaw_unwrap_offset_ += 2.0 * M_PI;
@@ -79,10 +71,8 @@ private:
         imu_msg.orientation.z = q.z();
         imu_msg.orientation.w = q.w();
 
-        // Set orientation covariance (0.01 rad^2 diagonal, -1 means unknown)
         imu_msg.orientation_covariance[8] = 0.00000001;
 
-        // Calculate angular velocity from angle differentiation
         double current_timestamp = msg->timestamp;
         double angular_velocity_x = 0.0;
         double angular_velocity_y = 0.0;
@@ -90,34 +80,28 @@ private:
 
         if (prev_timestamp_ > 0.0) {
             double dt = current_timestamp - prev_timestamp_;
-            if (dt > 1e-6) {  // Avoid division by very small numbers
+            if (dt > 1e-6) {
                 angular_velocity_x = (msg->angle_x - prev_angle_x_) / dt;
                 angular_velocity_y = (msg->angle_y - prev_angle_y_) / dt;
                 angular_velocity_z = (msg->angle_z - prev_angle_z_) / dt;
             }
         }
 
-        // Set angular velocity (calculated from angle differentiation)
         imu_msg.angular_velocity.x = angular_velocity_x;
         imu_msg.angular_velocity.y = angular_velocity_y;
         imu_msg.angular_velocity.z = angular_velocity_z;
 
-        // Set angular velocity covariance
         imu_msg.angular_velocity_covariance[8] = 0.0000001;
 
-        // Set linear acceleration
         imu_msg.linear_acceleration.x = msg->acceleration_x;
         imu_msg.linear_acceleration.y = msg->acceleration_y;
         imu_msg.linear_acceleration.z = msg->acceleration_z;
 
-        // Set linear acceleration covariance
         imu_msg.linear_acceleration_covariance[0] = 0.0000001;
         imu_msg.linear_acceleration_covariance[4] = 0.0000001;
 
-        // Publish the message
         imu_publisher_->publish(imu_msg);
 
-        // Update previous values for next iteration
         prev_angle_x_ = msg->angle_x;
         prev_angle_y_ = msg->angle_y;
         prev_angle_z_ = msg->angle_z;
