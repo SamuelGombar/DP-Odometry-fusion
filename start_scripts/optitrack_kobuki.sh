@@ -1,6 +1,6 @@
 BAG_NAME="opti_structured"
 SUFFIX="_current_conf_plicp_noimu"
-RECORD=true
+RECORD=false
 
 echo "Select odometry pipeline:"
 echo "  1) CSM"
@@ -28,9 +28,9 @@ case "$ODOM_TYPE" in
 esac
 /usr/bin/gnome-terminal --tab -- bash -c "rviz2 -d /home/samuelg9/ros2_ws_host/rviz/${RVIZ_CONFIG}.rviz --ros-args -p use_sim_time:=true; exec bash" &
 
-# Wheel odom path (common)
+
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/odom -p path_topic:=/odom_path -p use_sim_time:=true; exec bash" &
-# OptiTrack ground truth path (common)
+
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/optitrack -p path_topic:=/optitrack_path -p use_sim_time:=true; exec bash" &
 
 if [ "$ODOM_TYPE" = "csm" ]; then

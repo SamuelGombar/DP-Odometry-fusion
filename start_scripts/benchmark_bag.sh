@@ -1,6 +1,6 @@
 BAG_NAME="Ralf_4m"
 SUFFIX="_4_0075_imu_orientation"    # "_0075_regul_0-0001_15"
-RECORD=true
+RECORD=false
 
 echo "Select odometry pipeline:"
 echo "  1) CSM"
@@ -26,7 +26,6 @@ case "$ODOM_TYPE" in
   kin)      RVIZ_CONFIG="kinematic_icp" ;;
 esac
 
-# RViz
 /usr/bin/gnome-terminal --tab -- bash -c "rviz2 -d /home/samuelg9/ros2_ws_host/rviz/${RVIZ_CONFIG}.rviz; exec bash" &
 
 if [ "$ODOM_TYPE" = "csm" ]; then
@@ -68,7 +67,6 @@ elif [ "$ODOM_TYPE" = "kin" ]; then
   fi
 fi
 
-# Ground truth (common)
 if [ "$ODOM_TYPE" = "kin" ]; then
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp gt_wrapper --ros-args -p use_sim_time:=true; exec bash" &
 else

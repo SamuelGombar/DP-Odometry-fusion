@@ -8,9 +8,7 @@ logs/
 build/
 install/
 venv/
-recordings/*/
-!recordings/output/
-recordings/output/*/
+recordings/
 
 .vscode/
 
