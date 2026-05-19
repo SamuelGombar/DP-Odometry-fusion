@@ -1,11 +1,11 @@
 
-#-----------CONFIGURATION-----------
+#---------------CONFIGURATION---------------
 
-WORKSPACE=~/ros2_ws_host
-BAG_NAME="Tetragon_4m"
+WORKSPACE_PATH=~/ros2_ws_host
+BAG_NAME="Tetragon_7m"
 KOBUKI=false
 
-#-----------------------------------
+#-------------------------------------------
 
 echo "Select odometry pipeline:"
 echo "  1) CSM"
@@ -71,6 +71,9 @@ else
     /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/ground_truth_wrapper -p path_topic:=/ground_truth_path; exec bash" &
 fi
 /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=${ODOM_TOPIC} -p path_topic:=${ODOM_PATH_TOPIC}; exec bash" &
+if [[ "${ODOM_TYPE}" == "genz" ]]; then
+    /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/genz/odometry -p path_topic:=/genz/odometry_path; exec bash" &
+fi
 
 # sleep 8
-ros2 service call /compr_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 25.0}"
+ros2 service call /compr_player/set_rate rosbag2_interfaces/srv/SetRate "{rate: 10.0}"
