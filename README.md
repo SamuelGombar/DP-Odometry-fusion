@@ -1,6 +1,6 @@
 # Fúzia kolesovej odometrie a LiDAR odometrie 
 
-Repozitár implementácie diplomovej práce. Slúži na porovnávanie fúzií GenZ-ICP + EKF, Kinematic-ICP a PLICP. Experimentálne vyhodnotenie je vykonané
+Repozitár implementácie diplomovej práce. Slúži na porovnávanie fúzií GenZ-ICP + EKF, Kinematic-ICP a PLICP, spolu s aplikovanou filtráciou lokálnej mapy od chybných meraní a lúčov dopadajúcich na pohybujúce sa okolité objekty. Experimentálne vyhodnotenie je vykonané
 na reálnom mobilnom robote Kobuki a Brightpick Autopicker.
 
 ---
@@ -72,8 +72,10 @@ sudo apt install -y \
 
 ## Build
 
+je potrebné byť v pracovnom priečinku typicky ~/ros2_ws, alebo s vlastným názvom ~/{workspace}
+
 ```bash
-mkdir -p ~/<workspace> && cd ~/<workspace>
+mkdir -p ~/ros2_ws_fusion && cd ~/ros2_ws_fusion
 git clone git@github.com:SamuelGombar/DP-Odometry-fusion.git
 source /opt/ros/jazzy/setup.bash
 colcon build
@@ -101,10 +103,11 @@ source install/setup.bash
 
 ## Vykreslovanie grafov a trajektórií
 
-Na vykreslovanie grafov a trajekórií slúži skript run_trajectory_eval.sh v priečinku ~/<workspace>/start_scripts. Predtým je ale potrebné pripraviť virtuálne prostredie venv a nainštalovať potrebné balíky install numpy matplotlib pandas scipy. Stačí jednoducho spustiť setup_venv.sh.
+Na vykreslovanie grafov a trajekórií slúži skript run_trajectory_eval.sh v priečinku ~/ros2_ws_fusion/start_scripts. Predtým je ale potrebné pripraviť virtuálne prostredie venv a nainštalovať potrebné balíky install numpy matplotlib pandas scipy. Stačí jednoducho spustiť setup_venv.sh.
 
 ```
-cd ~/<workspace>/start_scripts
+source /opt/ros/jazzy/setup.bash
+cd ~/ros2_ws_fusion/start_scripts
 chmod +x setup_venv.sh
 ./setup_venv.sh
 ```
@@ -112,12 +115,12 @@ chmod +x setup_venv.sh
 Sú potrebné nastaviť konfigurácie v skripte run_trajectory_eval.sh.
 
 ```
-WORKSPACE_PATH=~/<workspace>    # cesta k pracovnému priečinku
-BAG_NAME="Tetragon_4m"          # meno datasetu
-KOBUKI=false                    # ak kobuki alebo autopicker
-MODE="temporal"                 # mód vyhodnocovania chyby poloha - gt_poloha
-SAVE_DIR="~/Desktop/temp"       # priečinok uloženia grafov
-SAVE_PREFIX="one"               # sufix pre názvy, napr. one_plot.png
+WORKSPACE_PATH=~/ros2_ws_fusion     # cesta k pracovnému priečinku
+BAG_NAME="Tetragon_4m"              # meno datasetu
+KOBUKI=false                        # ak kobuki alebo autopicker
+MODE="temporal"                     # mód vyhodnocovania chyby poloha - gt_poloha
+SAVE_DIR="~/Desktop/temp"           # priečinok uloženia grafov
+SAVE_PREFIX="one"                   # sufix pre názvy, napr. one_plot.png
 ```
 
 Sú vykreslované offline - priamo vyčítané z bagov.
@@ -132,22 +135,22 @@ Na nasledovnom linku sa nachádzajú datasety pre nahraté fúzie vo forme ros2 
 https://drive.google.com/drive/folders/1PvXUu1KdgURwsZjl1HbctmSI2fn-UjsG?usp=sharing
 ```
 
-po stiahnutí a rozbalení priečinka recordings ho je potrebné presunúť do pracovného priečinka (workspace ~/<workspace>):
+po stiahnutí a rozbalení priečinka recordings ho je potrebné presunúť do pracovného priečinka (workspace ~/ros2_ws_fusion):
 
 ```
-mv ~/Downloads/recordings ~/<workspace>
+mv ~/Downloads/recordings ~/ros2_ws_fusion
 ```
 
-Pre prehratie nahratých datasetov slúži skript play_bag.sh v priečinku ~/<workspace>/start_scripts.
+Pre prehratie nahratých datasetov slúži skript play_bag.sh v priečinku ~/ros2_ws_fusion/start_scripts.
 Najprv je potrebné nastaviť konfiguráciu v play_bag.sh.
 
 ```
-WORKSPACE_PATH=~/<workspace>    # cesta k pracovnému priečinku
-BAG_NAME="Tetragon_4m"          # meno datasetu
-KOBUKI=false                    # ak kobuki alebo autopicker
+WORKSPACE_PATH=~/ros2_ws_fusion     # cesta k pracovnému priečinku
+BAG_NAME="Tetragon_4m"              # meno datasetu
+KOBUKI=false                        # ak kobuki alebo autopicker
 ```
 
-Pred spustením je potrebné udeliť práva na spúšťanie. Vizualizácia prebieha v Rviz2.
+Pred spustením je potrebné udeliť práva na spúšťanie. Vizualizácia prebieha v Rviz.
 
 ```
 chmod +x play_bag.sh
@@ -155,6 +158,17 @@ chmod +x play_bag.sh
 ```
 
 Ak chcete znížiť rýchlosť prehrávania bagu, je možné nastaviť pomocou ros2 service
-uvedeného na konci play_bag.sh, alebo manuálne šípkami počas prehrávania bagu.
+uvedeného na konci play_bag.sh, alebo manuálne šípkami počas prehrávania bagu. Skript spúsťa Rviz s vlastnou konfiguráciou pre danú fúziu/odometriu uložených v ~/ros2_ws_fusion/rviz. 
 
 ---
+
+## Nahrávanie fúzie
+
+Pre nahrávanie fúzie podľa dát z prednahratých bagov Autopickera (sken, koles. odometria) je skript benchmark_bag.sh. Pre Kobuki, skript optitrack_kobuki.sh. Nasledovné riadky sú konfigurácie
+v príslušných skriptoch.
+
+```
+BAG_NAME="Candy_4m"       # name of the bag in ~/ros2_ws_fusion/recordings/bp
+SUFFIX="_no_imu"          # to save the fusion odometry with its own suffix, e.g. Candy_4m_no_imu
+RECORD=false              # whether to record to folder ~/ros2_ws_fusion/recordings/output
+```

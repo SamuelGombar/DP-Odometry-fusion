@@ -1,6 +1,6 @@
-BAG_NAME="opti_structured"
-SUFFIX="_current_conf_plicp_noimu"
-RECORD=false
+BAG_NAME="opti_structured"    # name of the bag in ~/ros2_ws/recordings/optitrack
+SUFFIX="_no_imu"              # to save the fusion odometry with its own suffix, e.g. opti_basic_no_imu
+RECORD=false                  # whether to record to folder ~/ros2_ws/recordings/output
 
 echo "Select odometry pipeline:"
 echo "  1) CSM"
@@ -23,7 +23,7 @@ OUTPUT="/home/samuelg9/ros2_ws_host/recordings/output/kobuki/${ODOM_TYPE}/${BAG_
 # RViz
 case "$ODOM_TYPE" in
   csm)     RVIZ_CONFIG="kobuki_csm_optitrack" ;;
-  genz) RVIZ_CONFIG="kobuki_genz_ekf_optitrack" ;;
+  genz)    RVIZ_CONFIG="kobuki_genz_ekf_optitrack" ;;
   kin)     RVIZ_CONFIG="kobuki_kin_optitrack" ;;
 esac
 /usr/bin/gnome-terminal --tab -- bash -c "rviz2 -d /home/samuelg9/ros2_ws_host/rviz/${RVIZ_CONFIG}.rviz --ros-args -p use_sim_time:=true; exec bash" &
@@ -42,6 +42,7 @@ if [ "$ODOM_TYPE" = "csm" ]; then
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/fusion_odometry -p path_topic:=/fusion_odometry_path -p use_sim_time:=true; exec bash" &
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/odom_icp -p path_topic:=/odom_icp_path -p use_sim_time:=true; exec bash" &
   if [ "$RECORD" = true ]; then
+    mkdir -p "$(dirname "$OUTPUT")"
     /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag record -o ${OUTPUT} /scan /odom /imu /fusion_odometry /odom_icp /tf /tf_static /optitrack; exec bash" &
   fi
 
@@ -54,6 +55,7 @@ elif [ "$ODOM_TYPE" = "genz" ]; then
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 launch robot_localization ekf.launch.py use_sim_time:=true params_file:=/home/samuelg9/ros2_ws_host/src/robot_localization/params/ekf_kobuki.yaml; exec bash" &
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/odometry/filtered -p path_topic:=/odometry/path -p use_sim_time:=true; exec bash" &
   if [ "$RECORD" = true ]; then
+    mkdir -p "$(dirname "$OUTPUT")"
     /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag record -o ${OUTPUT} /scan /odom /imu /genz/odometry /genz/local_map /genz/non_planar_points /genz/planar_points /odometry/filtered /tf /tf_static /optitrack; exec bash" &
   fi
 
@@ -65,6 +67,7 @@ elif [ "$ODOM_TYPE" = "kin" ]; then
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 launch kinematic_icp online_node.launch.py lidar_topic:=/scan use_2d_lidar:=true use_sim_time:=False; exec bash" &
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/kinematic_icp/lidar_odometry -p path_topic:=/kinematic_icp/lidar_odometry_path; exec bash" &
   if [ "$RECORD" = true ]; then
+    mkdir -p "$(dirname "$OUTPUT")"
     /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag record -o ${OUTPUT} /scan /odom /imu /kinematic_icp/lidar_odometry /kinematic_icp/frame /kinematic_icp/keypoints /kinematic_icp/local_map /tf /tf_static /optitrack; exec bash" &
   fi
 fi

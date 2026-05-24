@@ -1,6 +1,6 @@
-BAG_NAME="Ralf_4m"
-SUFFIX="_4_0075_imu_orientation"    # "_0075_regul_0-0001_15"
-RECORD=false
+BAG_NAME="Candy_4m"       # name of the bag in ~/ros2_ws/recordings/bp
+SUFFIX="_no_imu"          # to save the fusion odometry with its own suffix, e.g. Candy_4m_no_imu
+RECORD=false              # whether to record to folder ~/ros2_ws/recordings/output
 
 echo "Select odometry pipeline:"
 echo "  1) CSM"
@@ -38,6 +38,7 @@ if [ "$ODOM_TYPE" = "csm" ]; then
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/fusion_odometry -p path_topic:=/fusion_odometry_path; exec bash" &
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/odom_icp -p path_topic:=/odom_icp_path; exec bash" &
   if [ "$RECORD" = true ]; then
+    mkdir -p "$(dirname "$OUTPUT_PATH")"
     /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag record -o ${OUTPUT_PATH} /ground_truth_wrapper /imu /fusion_odometry /scan_merged_c /odom_icp /tf /tf_static /wheel_odom; exec bash" &
   fi
 
@@ -52,6 +53,7 @@ elif [ "$ODOM_TYPE" = "genz" ]; then
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/wheel_odom -p path_topic:=/wheel_odom_path; exec bash" &
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/odometry/filtered -p path_topic:=/odometry/path; exec bash" &
   if [ "$RECORD" = true ]; then
+    mkdir -p "$(dirname "$OUTPUT_PATH")"
     /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag record -o ${OUTPUT_PATH} /genz/local_map /genz/non_planar_points /genz/odometry /genz/planar_points /ground_truth_wrapper /imu /odometry/filtered /scan_merged_c /tf /tf_static /wheel_odom; exec bash" &
   fi
 
@@ -63,6 +65,7 @@ elif [ "$ODOM_TYPE" = "kin" ]; then
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/wheel_odom -p path_topic:=/wheel_odom_path -p use_sim_time:=true; exec bash" &
   /usr/bin/gnome-terminal --tab -- bash -c "ros2 run robot_control_cpp odom_to_path --ros-args -p odometry_topic:=/kinematic_icp/lidar_odometry -p path_topic:=/kinematic_icp/lidar_odometry_path -p use_sim_time:=true; exec bash" &
   if [ "$RECORD" = true ]; then
+    mkdir -p "$(dirname "$OUTPUT_PATH")"
     /usr/bin/gnome-terminal --tab -- bash -c "ros2 bag record -o ${OUTPUT_PATH} /kinematic_icp/lidar_odometry /kinematic_icp/frame /kinematic_icp/keypoints /kinematic_icp/local_map /ground_truth_wrapper /imu /odometry/filtered /scan_merged_c /tf /tf_static /wheel_odom; exec bash" &
   fi
 fi
