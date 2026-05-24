@@ -28,12 +28,12 @@ RECORDINGS_BASE = os.path.join(WORKSPACE, "recordings", "output")
 # Hardcoded ground-truth lookup
 # Columns: (base_name, distance_suffix, gt_bag_relative, cutoff_ts)
 GT_LOOKUP = [
-    ("Tetragon", "4m", "genz/Tetragon_7m", 1777204630),
-    ("Tetragon", "7m", "genz/Tetragon_7m", 1777204630),
-    ("Lambda",   "4m", "genz/Lambda_4m",   1777206864),
-    ("Lambda",   "7m", "genz/Lambda_4m",   1777206864),
-    ("Sigma",    "4m", "genz/Sigma_4m",    1777213240),
-    ("Sigma",    "7m", "genz/Sigma_4m",    1777213240),
+    ("Tetragon", "4m", "autopicker/genz/Tetragon_7m", 1777204630),
+    ("Tetragon", "7m", "autopicker/genz/Tetragon_7m", 1777204630),
+    ("Lambda",   "4m", "autopicker/genz/Lambda_4m",   1777206864),
+    ("Lambda",   "7m", "autopicker/genz/Lambda_4m",   1777206864),
+    ("Sigma",    "4m", "autopicker/genz/Sigma_4m",    1777213240),
+    ("Sigma",    "7m", "autopicker/genz/Sigma_4m",    1777213240),
 ]
 
 
@@ -108,7 +108,7 @@ if KOBUKI:
         "--timestamp-offset", "0.0",
     ]
 else:
-    bag_path = os.path.join(RECORDINGS_BASE, odom_type, BAG_NAME)
+    bag_path = os.path.join(RECORDINGS_BASE, "autopicker", odom_type, BAG_NAME)
     gt_bag, cutoff_ts = lookup_gt(BAG_NAME)
     cmd = [
         sys.executable, trajectory_eval,

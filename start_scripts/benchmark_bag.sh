@@ -18,7 +18,7 @@ case "$ODOM_CHOICE" in
     ;;
 esac
 
-OUTPUT_PATH="/home/samuelg9/ros2_ws_host/recordings/output/${ODOM_TYPE}/${BAG_NAME}${SUFFIX}"
+OUTPUT_PATH="/home/samuelg9/ros2_ws_host/recordings/output/autopicker/${ODOM_TYPE}/${BAG_NAME}${SUFFIX}"
 
 case "$ODOM_TYPE" in
   csm)      RVIZ_CONFIG="csm_fusion_benchmark" ;;

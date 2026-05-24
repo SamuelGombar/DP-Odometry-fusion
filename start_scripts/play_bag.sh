@@ -57,7 +57,7 @@ esac
 if [[ "${KOBUKI}" == "true" ]]; then
   BAG_PATH="/home/samuelg9/ros2_ws_host/recordings/output/kobuki/${BAG_SUBFOLDER}/${BAG_NAME}"
 else
-  BAG_PATH="/home/samuelg9/ros2_ws_host/recordings/output/${BAG_SUBFOLDER}/${BAG_NAME}"
+  BAG_PATH="/home/samuelg9/ros2_ws_host/recordings/output/autopicker/${BAG_SUBFOLDER}/${BAG_NAME}"
 fi
 
 /usr/bin/gnome-terminal --tab -- bash -c "rviz2 -d /home/samuelg9/ros2_ws_host/rviz/${RVIZ}.rviz; exec bash" &
