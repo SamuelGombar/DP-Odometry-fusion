@@ -1,14 +1,13 @@
-# Ignore PDF and Graphviz files
 *.pdf
 *.gv
 
-# Ignore log, build, and install folders
 log/
 logs/
 build/
 install/
 venv/
 recordings/
+__pycache__
 
 .vscode/
 
@@ -19,5 +18,6 @@ results.csv
 results.png
 
 csv_files_*/
+csv_datasets/
 
 commands.txt
